@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>➕ Ajouter un Produit</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Poppins', sans-serif; }
+        
+        body { 
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        
+        .form-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+        
+        .form-title {
+            text-align: center;
+            color: #333;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+        
+        .form-control-modern {
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 15px 20px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+        
+        .form-control-modern:focus {
+            border-color: #56ab2f;
+            box-shadow: 0 0 0 0.2rem rgba(86, 171, 47, 0.25);
+            background: white;
+            outline: none;
+        }
+        
+        .btn-submit {
+            background: linear-gradient(45deg, #56ab2f, #a8e6cf);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(86, 171, 47, 0.4);
+            color: white;
+        }
+        
+        .btn-back {
+            background: linear-gradient(45deg, #6c757d, #adb5bd);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 12px 30px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-back:hover {
+            transform: translateY(-2px);
+            color: white;
+        }
+        
+        .alert-modern {
+            border: none;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .input-group-modern {
+            display: flex;
+            gap: 15px;
+            align-items: end;
+        }
+        
+        .code-generator {
+            background: #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        .preview-card {
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 5px solid #56ab2f;
+        }
+        
+        .emoji-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .emoji-option {
+            font-size: 1.5em;
+            padding: 10px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .emoji-option:hover {
+            background: #56ab2f;
+            color: white;
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="form-title mb-0">➕ Ajouter un Produit</h1>
+            <a href="/" class="btn-back">
+                <i class="bi bi-arrow-left me-2"></i>Retour
+            </a>
+        </div>
+        
+        {% if error %}
+        <div class="alert alert-danger alert-modern">
+            <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+        </div>
+        {% endif %}
+        
+        <form method="POST" id="productForm">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="bi bi-tag me-2"></i>Nom du produit *
+                        </label>
+                        <input type="text" name="nom" class="form-control form-control-modern" 
+                               placeholder="Ex: Écran iPhone 12" required>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="bi bi-folder me-2"></i>Catégorie
+                        </label>
+                        <select name="categorie" class="form-control form-control-modern">
+                            {% for cat in categories %}
+                            <option value="{{ cat.nom }}">{{ cat.emoji }} {{ cat.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="bi bi-currency-euro me-2"></i>Prix (€) *
+                        </label>
+                        <input type="number" name="prix" class="form-control form-control-modern" 
+                               step="0.01" min="0" placeholder="0.00" required>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="bi bi-box me-2"></i>Stock initial
+                        </label>
+                        <input type="number" name="stock" class="form-control form-control-modern" 
+                               min="0" placeholder="0" value="0">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="bi bi-upc-scan me-2"></i>Code-barres
+                </label>
+                <div class="input-group-modern">
+                    <input type="text" name="code_barres" id="codeBarres" 
+                           class="form-control form-control-modern flex-grow-1" 
+                           placeholder="Laissez vide pour génération automatique">
+                    <button type="button" class="btn btn-outline-secondary" 
+                            onclick="genererCode()" style="border-radius: 10px; padding: 10px 20px;">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Générer
+                    </button>
+                </div>
+                <div class="code-generator">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Un code-barres unique sera généré automatiquement si vous laissez ce champ vide
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Aperçu du produit -->
+            <div class="preview-card" id="preview" style="display: none;">
+                <h6 class="fw-bold text-success mb-3">
+                    <i class="bi bi-eye me-2"></i>Aperçu du produit
+                </h6>
+                <div class="d-flex align-items-center gap-3">
+                    <div id="previewEmoji" style="font-size: 2rem;">📦</div>
+                    <div>
+                        <div id="previewNom" class="fw-bold fs-5">Nom du produit</div>
+                        <div id="previewCategorie" class="text-muted">Catégorie</div>
+                        <div class="d-flex gap-2 mt-2">
+                            <span id="previewPrix" class="badge bg-success">0.00€</span>
+                            <span id="previewStock" class="badge bg-primary">Stock: 0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn-submit">
+                    <i class="bi bi-plus-circle me-2"></i>Ajouter le Produit
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Génération automatique de code-barres
+        function genererCode() {
+            const timestamp = Date.now().toString();
+            const code = timestamp.slice(-13);
+            document.getElementById('codeBarres').value = code;
+            updatePreview();
+        }
+        
+        // Aperçu en temps réel
+        function updatePreview() {
+            const nom = document.querySelector('input[name="nom"]').value || 'Nom du produit';
+            const prix = document.querySelector('input[name="prix"]').value || '0.00';
+            const stock = document.querySelector('input[name="stock"]').value || '0';
+            const categorieSelect = document.querySelector('select[name="categorie"]');
+            const categorieText = categorieSelect.options[categorieSelect.selectedIndex].text;
+            const emoji = categorieText.split(' ')[0];
+            const categorie = categorieText.substring(2);
+            
+            document.getElementById('previewNom').textContent = nom;
+            document.getElementById('previewCategorie').textContent = categorie;
+            document.getElementById('previewPrix').textContent = parseFloat(prix).toFixed(2) + '€';
+            document.getElementById('previewStock').textContent = 'Stock: ' + stock;
+            document.getElementById('previewEmoji').textContent = emoji;
+            
+            document.getElementById('preview').style.display = 'block';
+        }
+        
+        // Écouteurs d'événements pour l'aperçu
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                input.addEventListener('input', updatePreview);
+                input.addEventListener('change', updatePreview);
+            });
+            
+            // Animation d'entrée
+            const container = document.querySelector('.form-container');
+            container.style.opacity = '0';
+            container.style.transform = 'translateY(30px)';
+            
+            setTimeout(() => {
+                container.style.transition = 'all 0.6s ease';
+                container.style.opacity = '1';
+                container.style.transform = 'translateY(0)';
+            }, 100);
+        });
+        
+        // Validation du formulaire
+        document.getElementById('productForm').addEventListener('submit', function(e) {
+            const nom = document.querySelector('input[name="nom"]').value.trim();
+            const prix = document.querySelector('input[name="prix"]').value;
+            
+            if (!nom) {
+                e.preventDefault();
+                alert('⚠️ Le nom du produit est obligatoire');
+                return;
+            }
+            
+            if (!prix || parseFloat(prix) < 0) {
+                e.preventDefault();
+                alert('⚠️ Le prix doit être un nombre positif');
+                return;
+            }
+            
+            // Animation de soumission
+            const btn = document.querySelector('.btn-submit');
+            btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Ajout en cours...';
+            btn.disabled = true;
+        });
+        
+        // Raccourcis clavier
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                document.getElementById('productForm').submit();
+            }
+            if (e.key === 'Escape') {
+                window.location.href = '/';
+            }
+        });
+    </script>
+</body>
+</html>

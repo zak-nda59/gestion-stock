@@ -1,0 +1,152 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistiques</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
+        .navbar { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .container-main { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .stat-card { background: white; border-radius: 8px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center; }
+        .stat-number { font-size: 2.5rem; font-weight: 700; margin: 10px 0; }
+        .chart-card { background: white; border-radius: 8px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand fw-bold" href="/"><i class="bi bi-box-seam me-2"></i>Inventaire</a>
+            <div class="navbar-nav ms-auto d-flex flex-row gap-3">
+                <a class="nav-link" href="/"><i class="bi bi-house"></i> Accueil</a>
+                <a class="nav-link" href="/produits"><i class="bi bi-list-ul"></i> Produits</a>
+                <a class="nav-link" href="/ajouter"><i class="bi bi-plus-circle"></i> Ajouter</a>
+                <a class="nav-link active" href="/statistiques"><i class="bi bi-graph-up"></i> Stats</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-main">
+        <h4 class="mb-4"><i class="bi bi-graph-up me-2"></i>Statistiques de l'Inventaire</h4>
+        
+        <!-- Statistiques principales -->
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3">
+                <div class="stat-card">
+                    <i class="bi bi-box text-primary" style="font-size: 2rem;"></i>
+                    <div class="stat-number text-primary">{{ stats.total_produits }}</div>
+                    <div class="text-muted">Produits au total</div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="stat-card">
+                    <i class="bi bi-exclamation-triangle text-danger" style="font-size: 2rem;"></i>
+                    <div class="stat-number text-danger">{{ stats.ruptures }}</div>
+                    <div class="text-muted">En rupture</div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="stat-card">
+                    <i class="bi bi-currency-euro text-success" style="font-size: 2rem;"></i>
+                    <div class="stat-number text-success">{{ "%.2f"|format(stats.valeur_totale or 0) }}€</div>
+                    <div class="text-muted">Valeur totale</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graphiques -->
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <div class="chart-card">
+                    <h6 class="mb-3">Produits par Catégorie</h6>
+                    <canvas id="chartCategories"></canvas>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="chart-card">
+                    <h6 class="mb-3">État du Stock</h6>
+                    <canvas id="chartStock"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top produits -->
+        <div class="chart-card">
+            <h6 class="mb-3">Top 5 Produits</h6>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Produit</th>
+                            <th>Stock</th>
+                            <th>Prix</th>
+                            <th>Valeur</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for produit in stats.top_produits[:5] %}
+                        <tr>
+                            <td class="fw-semibold">{{ produit.nom }}</td>
+                            <td><span class="badge bg-primary">{{ produit.stock }}</span></td>
+                            <td>{{ "%.2f"|format(produit.prix) }}€</td>
+                            <td><strong>{{ "%.2f"|format(produit.stock * produit.prix) }}€</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Graphique Catégories
+        const ctxCat = document.getElementById('chartCategories').getContext('2d');
+        new Chart(ctxCat, {
+            type: 'doughnut',
+            data: {
+                labels: {{ stats.categories_labels | tojson }},
+                datasets: [{
+                    data: {{ stats.categories_data | tojson }},
+                    backgroundColor: ['#0d6efd', '#6c757d', '#198754', '#ffc107', '#dc3545', '#0dcaf0']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+
+        // Graphique Stock
+        const ctxStock = document.getElementById('chartStock').getContext('2d');
+        new Chart(ctxStock, {
+            type: 'bar',
+            data: {
+                labels: ['Stock OK', 'Stock Faible', 'Rupture'],
+                datasets: [{
+                    label: 'Nombre de produits',
+                    data: [{{ stats.stock_ok }}, {{ stats.stock_faible }}, {{ stats.ruptures }}],
+                    backgroundColor: ['#198754', '#ffc107', '#dc3545']
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

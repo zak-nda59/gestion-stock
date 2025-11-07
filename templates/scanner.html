@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner & Gérer Stock</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
+        .navbar { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .container-main { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+        .scanner-card { background: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .scan-input { font-size: 1.5rem; padding: 20px; text-align: center; border: 3px solid #0d6efd; border-radius: 8px; }
+        .scan-input:focus { border-color: #0a58ca; box-shadow: 0 0 0 0.3rem rgba(13,110,253,.25); }
+        .product-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; padding: 25px; margin-bottom: 20px; }
+        .stock-action-card { background: white; border-radius: 8px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .qty-input { font-size: 2rem; text-align: center; font-weight: bold; border: 2px solid #dee2e6; }
+        .btn-action { padding: 15px; font-size: 1.1rem; }
+        #camera-container { position: relative; width: 100%; max-width: 640px; margin: 20px auto; border-radius: 8px; overflow: hidden; background: #000; min-height: 480px; }
+        #camera-view { width: 100%; height: 100%; position: relative; }
+        #camera-view video { width: 100% !important; height: auto !important; display: block !important; }
+        #camera-view canvas { position: absolute !important; top: 0 !important; left: 0 !important; }
+        .camera-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; height: 40%; border: 3px solid #0d6efd; box-shadow: 0 0 0 9999px rgba(0,0,0,0.5); pointer-events: none; z-index: 10; }
+        .scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: #0d6efd; animation: scan 2s linear infinite; z-index: 11; }
+        @keyframes scan { 0%, 100% { top: 0; } 50% { top: 100%; } }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand fw-bold" href="/"><i class="bi bi-box-seam me-2"></i>Inventaire</a>
+            <div class="navbar-nav ms-auto d-flex flex-row gap-3">
+                <a class="nav-link" href="/"><i class="bi bi-house"></i> Accueil</a>
+                <a class="nav-link" href="/produits"><i class="bi bi-list-ul"></i> Produits</a>
+                <a class="nav-link" href="/ajouter"><i class="bi bi-plus-circle"></i> Ajouter</a>
+                <a class="nav-link active" href="/scanner"><i class="bi bi-upc-scan"></i> Scanner</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-main">
+        <!-- Scanner -->
+        <div class="scanner-card text-center">
+            <h4 class="mb-4"><i class="bi bi-upc-scan me-2"></i>Scanner un Code-barres</h4>
+            
+            <!-- Boutons de mode -->
+            <div class="btn-group mb-4" role="group">
+                <button type="button" class="btn btn-outline-primary" onclick="showManualMode()">
+                    <i class="bi bi-keyboard"></i> Saisie Manuelle
+                </button>
+                <button type="button" class="btn btn-outline-primary" onclick="showCameraMode()">
+                    <i class="bi bi-camera"></i> Caméra
+                </button>
+            </div>
+
+            <!-- Mode saisie manuelle -->
+            <div id="manualMode">
+                <div class="mb-4">
+                    <input type="text" 
+                           id="barcodeInput" 
+                           class="form-control scan-input" 
+                           placeholder="Scannez ou tapez le code-barres..."
+                           autofocus>
+                    <small class="text-muted mt-2 d-block">
+                        <i class="bi bi-info-circle me-1"></i>Utilisez votre douchette ou tapez le code manuellement
+                    </small>
+                </div>
+
+                <button onclick="searchProduct()" class="btn btn-primary btn-lg px-5">
+                    <i class="bi bi-search me-2"></i>Rechercher
+                </button>
+            </div>
+
+            <!-- Mode caméra -->
+            <div id="cameraMode" style="display: none;">
+                <div id="camera-container" style="display: none;">
+                    <div id="camera-view"></div>
+                    <div class="camera-overlay">
+                        <div class="scan-line"></div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <button id="startCameraBtn" onclick="startCamera()" class="btn btn-success btn-lg px-5">
+                        <i class="bi bi-camera-video me-2"></i>Démarrer la Caméra
+                    </button>
+                    <button id="stopCameraBtn" onclick="stopCamera()" class="btn btn-danger btn-lg px-5" style="display: none;">
+                        <i class="bi bi-stop-circle me-2"></i>Arrêter la Caméra
+                    </button>
+                </div>
+                
+                <div id="cameraStatus" class="alert alert-info mt-3" style="display: none;">
+                    <i class="bi bi-hourglass-split me-2"></i>
+                    <span id="cameraStatusText">Initialisation de la caméra...</span>
+                </div>
+                
+                <small class="text-muted mt-3 d-block">
+                    <i class="bi bi-info-circle me-1"></i>Pointez la caméra vers un code-barres pour le scanner automatiquement
+                </small>
+            </div>
+        </div>
+
+        <!-- Message si non trouvé -->
+        <div id="notFound" class="alert alert-warning" style="display: none;">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Produit non trouvé</strong> - Ce code-barres n'existe pas dans votre inventaire
+        </div>
+
+        <!-- Message de succès -->
+        <div id="successMessage" class="alert alert-success" style="display: none;">
+            <i class="bi bi-check-circle me-2"></i>
+            <strong id="successText"></strong>
+        </div>
+
+        <!-- Produit trouvé -->
+        <div id="productSection" style="display: none;">
+            <div class="product-card text-center">
+                <h3 id="productName" class="mb-2"></h3>
+                <p class="mb-1"><code id="productBarcode" style="background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 5px;"></code></p>
+                <div class="row mt-3">
+                    <div class="col-4">
+                        <small>Prix</small>
+                        <h5 id="productPrice"></h5>
+                    </div>
+                    <div class="col-4">
+                        <small>Stock Actuel</small>
+                        <h5 id="productStock" class="fw-bold"></h5>
+                    </div>
+                    <div class="col-4">
+                        <small>Catégorie</small>
+                        <h5 id="productCategory"></h5>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stock-action-card">
+                <h5 class="mb-4 text-center"><i class="bi bi-box-seam me-2"></i>Gérer le Stock</h5>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6 offset-md-3">
+                        <label class="form-label fw-semibold text-center d-block">Quantité</label>
+                        <input type="number" 
+                               id="quantityInput" 
+                               class="form-control qty-input" 
+                               value="1" 
+                               min="1">
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <button onclick="adjustStock('ajouter')" class="btn btn-success w-100 btn-action">
+                            <i class="bi bi-plus-circle me-2"></i>Ajouter au Stock
+                        </button>
+                    </div>
+                    <div class="col-md-6">
+                        <button onclick="adjustStock('retirer')" class="btn btn-danger w-100 btn-action">
+                            <i class="bi bi-dash-circle me-2"></i>Retirer du Stock
+                        </button>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <button onclick="resetScanner()" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>Scanner un autre produit
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
+    <script>
+        const input = document.getElementById('barcodeInput');
+        let currentProduct = null;
+        
+        // Recherche automatique après scan (quand Enter est pressé)
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchProduct();
+            }
+        });
+
+        async function searchProduct() {
+            const barcode = input.value.trim();
+            if (!barcode) {
+                alert('Veuillez scanner ou saisir un code-barres');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/produit/${barcode}`);
+                const data = await response.json();
+
+                if (data.success && data.produit) {
+                    showProduct(data.produit);
+                } else {
+                    showNotFound();
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                showNotFound();
+            }
+        }
+
+        function showProduct(produit) {
+            currentProduct = produit;
+            
+            // Cacher les messages
+            document.getElementById('notFound').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+            
+            // Afficher le produit
+            document.getElementById('productSection').style.display = 'block';
+            
+            // Remplir les infos
+            document.getElementById('productName').textContent = produit.nom;
+            document.getElementById('productBarcode').textContent = produit.code_barres;
+            document.getElementById('productPrice').textContent = produit.prix.toFixed(2) + '€';
+            document.getElementById('productStock').textContent = produit.stock;
+            document.getElementById('productCategory').textContent = produit.categorie;
+            
+            // Réinitialiser la quantité
+            document.getElementById('quantityInput').value = 1;
+        }
+
+        function showNotFound() {
+            document.getElementById('productSection').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('notFound').style.display = 'block';
+            
+            setTimeout(() => {
+                document.getElementById('notFound').style.display = 'none';
+                input.value = '';
+                input.focus();
+            }, 3000);
+        }
+
+        async function adjustStock(action) {
+            if (!currentProduct) return;
+            
+            const quantite = parseInt(document.getElementById('quantityInput').value);
+            if (isNaN(quantite) || quantite < 1) {
+                alert('Veuillez entrer une quantité valide');
+                return;
+            }
+
+            try {
+                const response = await fetch('/ajuster-stock', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        produit_id: currentProduct.id,
+                        action: action,
+                        quantite: quantite
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Mettre à jour le stock affiché
+                    document.getElementById('productStock').textContent = data.nouveau_stock;
+                    currentProduct.stock = data.nouveau_stock;
+                    
+                    // Afficher le message de succès
+                    const actionText = action === 'ajouter' ? 'ajouté' : 'retiré';
+                    document.getElementById('successText').innerHTML = 
+                        `<strong>${currentProduct.nom}:</strong> ${quantite} unité(s) ${actionText} avec succès ! Nouveau stock: <strong>${data.nouveau_stock}</strong>`;
+                    document.getElementById('successMessage').style.display = 'block';
+                    
+                    // Réinitialiser la quantité
+                    document.getElementById('quantityInput').value = 1;
+                    
+                    // Cacher le message après 3 secondes
+                    setTimeout(() => {
+                        document.getElementById('successMessage').style.display = 'none';
+                    }, 3000);
+                } else {
+                    alert(data.message || 'Erreur lors de la mise à jour du stock');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Erreur lors de la mise à jour du stock');
+            }
+        }
+
+        function resetScanner() {
+            currentProduct = null;
+            document.getElementById('productSection').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('notFound').style.display = 'none';
+            input.value = '';
+            input.focus();
+        }
+
+        // ===== CAMÉRA =====
+        let isScanning = false;
+
+        function showManualMode() {
+            stopCamera();
+            document.getElementById('manualMode').style.display = 'block';
+            document.getElementById('cameraMode').style.display = 'none';
+            input.focus();
+        }
+
+        function showCameraMode() {
+            document.getElementById('manualMode').style.display = 'none';
+            document.getElementById('cameraMode').style.display = 'block';
+        }
+
+        function startCamera() {
+            // Afficher le statut
+            document.getElementById('cameraStatus').style.display = 'block';
+            document.getElementById('cameraStatusText').textContent = 'Demande d\'autorisation de la caméra...';
+            
+            document.getElementById('camera-container').style.display = 'block';
+            document.getElementById('startCameraBtn').style.display = 'none';
+            document.getElementById('stopCameraBtn').style.display = 'inline-block';
+            isScanning = true;
+
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: document.querySelector('#camera-view'),
+                    constraints: {
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: "environment" // Caméra arrière sur mobile
+                    },
+                    area: { // Zone de scan
+                        top: "25%",
+                        right: "10%",
+                        left: "10%",
+                        bottom: "25%"
+                    }
+                },
+                decoder: {
+                    readers: [
+                        "code_128_reader",
+                        "ean_reader",
+                        "ean_8_reader",
+                        "code_39_reader",
+                        "upc_reader",
+                        "upc_e_reader"
+                    ],
+                    debug: {
+                        drawBoundingBox: false,
+                        showFrequency: false,
+                        drawScanline: false,
+                        showPattern: false
+                    }
+                },
+                locate: true,
+                frequency: 10
+            }, function(err) {
+                if (err) {
+                    console.error('Erreur Quagga:', err);
+                    document.getElementById('cameraStatus').className = 'alert alert-danger mt-3';
+                    document.getElementById('cameraStatusText').textContent = 'Erreur: ' + err.message + ' - Vérifiez les permissions de la caméra';
+                    stopCamera();
+                    return;
+                }
+                console.log("Caméra initialisée avec succès");
+                document.getElementById('cameraStatus').className = 'alert alert-success mt-3';
+                document.getElementById('cameraStatusText').textContent = 'Caméra active ! Pointez vers un code-barres...';
+                
+                // Cacher le message après 3 secondes
+                setTimeout(() => {
+                    document.getElementById('cameraStatus').style.display = 'none';
+                }, 3000);
+                
+                Quagga.start();
+            });
+
+            Quagga.onDetected(function(result) {
+                if (!isScanning) return;
+                
+                const code = result.codeResult.code;
+                console.log("Code-barres détecté:", code);
+                
+                // Vibration si disponible
+                if (navigator.vibrate) {
+                    navigator.vibrate(200);
+                }
+                
+                // Arrêter le scan et rechercher le produit
+                isScanning = false;
+                input.value = code;
+                stopCamera();
+                searchProduct();
+            });
+        }
+
+        function stopCamera() {
+            if (Quagga) {
+                Quagga.stop();
+            }
+            isScanning = false;
+            document.getElementById('camera-container').style.display = 'none';
+            document.getElementById('startCameraBtn').style.display = 'inline-block';
+            document.getElementById('stopCameraBtn').style.display = 'none';
+            document.getElementById('cameraStatus').style.display = 'none';
+        }
+
+        // Arrêter la caméra quand on quitte la page
+        window.addEventListener('beforeunload', function() {
+            stopCamera();
+        });
+    </script>
+</body>
+</html>

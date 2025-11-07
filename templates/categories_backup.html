@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏷️ Gestion des Catégories</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Poppins', sans-serif; }
+        
+        body { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        
+        .container-custom {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .header-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .form-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .category-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border-left: 5px solid #667eea;
+        }
+        
+        .category-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .category-emoji {
+            font-size: 2rem;
+            margin-right: 15px;
+        }
+        
+        .category-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .category-desc {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .form-control-modern {
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 15px 20px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+        
+        .form-control-modern:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            background: white;
+            outline: none;
+        }
+        
+        .btn-add {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+        
+        .btn-delete {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 15px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-delete:hover {
+            transform: scale(1.05);
+            color: white;
+        }
+        
+        .emoji-picker {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .emoji-option {
+            font-size: 1.5em;
+            padding: 10px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .emoji-option:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .emoji-option.selected {
+            background: #667eea;
+            color: white;
+            border-color: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-custom">
+        <!-- En-tête -->
+        <div class="header-card">
+            <h1>🏷️ Gestion des Catégories</h1>
+            <p class="text-muted">Créez et organisez vos catégories de produits</p>
+            <a href="/" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-left me-2"></i>Retour à l'accueil
+            </a>
+        </div>
+
+        <!-- Formulaire d'ajout -->
+        <div class="form-card">
+            <h4><i class="bi bi-plus-circle me-2"></i>Ajouter une Catégorie</h4>
+            
+            {% if error %}
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+            </div>
+            {% endif %}
+            
+            <form method="POST">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-tag me-2"></i>Nom de la catégorie *
+                        </label>
+                        <input type="text" name="nom" class="form-control form-control-modern" 
+                               placeholder="Ex: Écrans, Batteries..." required>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-emoji-smile me-2"></i>Emoji
+                        </label>
+                        <input type="text" name="emoji" id="emojiInput" class="form-control form-control-modern" 
+                               placeholder="📱" value="📦" maxlength="2">
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Sélecteur d'emoji</label>
+                    <div class="emoji-picker">
+                        <div class="emoji-option" onclick="selectEmoji('📱')">📱</div>
+                        <div class="emoji-option" onclick="selectEmoji('🔋')">🔋</div>
+                        <div class="emoji-option" onclick="selectEmoji('🛡️')">🛡️</div>
+                        <div class="emoji-option" onclick="selectEmoji('📎')">📎</div>
+                        <div class="emoji-option" onclick="selectEmoji('🔌')">🔌</div>
+                        <div class="emoji-option" onclick="selectEmoji('🔧')">🔧</div>
+                        <div class="emoji-option" onclick="selectEmoji('💾')">💾</div>
+                        <div class="emoji-option" onclick="selectEmoji('🎧')">🎧</div>
+                        <div class="emoji-option" onclick="selectEmoji('📦')">📦</div>
+                        <div class="emoji-option" onclick="selectEmoji('💻')">💻</div>
+                        <div class="emoji-option" onclick="selectEmoji('⌚')">⌚</div>
+                        <div class="emoji-option" onclick="selectEmoji('🖥️')">🖥️</div>
+                        <div class="emoji-option" onclick="selectEmoji('⌨️')">⌨️</div>
+                        <div class="emoji-option" onclick="selectEmoji('🖱️')">🖱️</div>
+                        <div class="emoji-option" onclick="selectEmoji('🔊')">🔊</div>
+                        <div class="emoji-option" onclick="selectEmoji('📷')">📷</div>
+                        <div class="emoji-option" onclick="selectEmoji('🎮')">🎮</div>
+                        <div class="emoji-option" onclick="selectEmoji('💡')">💡</div>
+                        <div class="emoji-option" onclick="selectEmoji('🔩')">🔩</div>
+                        <div class="emoji-option" onclick="selectEmoji('⚡')">⚡</div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">
+                        <i class="bi bi-file-text me-2"></i>Description (optionnel)
+                    </label>
+                    <textarea name="description" class="form-control form-control-modern" rows="2" 
+                              placeholder="Description de la catégorie..."></textarea>
+                </div>
+                
+                <button type="submit" class="btn-add w-100">
+                    <i class="bi bi-plus-circle me-2"></i>Créer la Catégorie
+                </button>
+            </form>
+        </div>
+
+        <!-- Liste des catégories -->
+        <div class="form-card">
+            <h4><i class="bi bi-list me-2"></i>Catégories Existantes ({{ categories|length }})</h4>
+            
+            {% if categories %}
+            <div class="row">
+                {% for cat in categories %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="category-card">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center flex-grow-1">
+                                <span class="category-emoji">{{ cat.emoji }}</span>
+                                <div>
+                                    <div class="category-name">{{ cat.nom }}</div>
+                                    {% if cat.description %}
+                                    <div class="category-desc">{{ cat.description }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div>
+                                <button class="btn-delete" 
+                                        onclick="confirmerSuppression({{ cat.id }}, '{{ cat.nom }}')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="bi bi-folder display-1 text-muted"></i>
+                <p class="text-muted mt-3">Aucune catégorie personnalisée créée</p>
+                <p class="text-muted">Utilisez le formulaire ci-dessus pour créer votre première catégorie</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        function selectEmoji(emoji) {
+            document.getElementById('emojiInput').value = emoji;
+            
+            // Mettre à jour la sélection visuelle
+            document.querySelectorAll('.emoji-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+        }
+        
+        function confirmerSuppression(id, nom) {
+            if (confirm(`⚠️ Êtes-vous sûr de vouloir supprimer la catégorie "${nom}" ?\n\nCette action est irréversible.`)) {
+                window.location.href = `/supprimer-categorie/${id}`;
+            }
+        }
+        
+        // Animation d'entrée
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.form-card, .header-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 200);
+            });
+        });
+    </script>
+</body>
+</html>

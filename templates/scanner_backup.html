@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📱 Scanner - Mobile Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+    <style>
+        * { font-family: 'Poppins', sans-serif; }
+        
+        body { 
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+        }
+        
+        .scanner-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+        }
+        
+        .scanner-input {
+            border: 3px solid #f093fb;
+            border-radius: 20px;
+            padding: 20px;
+            font-size: 20px;
+            text-align: center;
+            font-weight: 600;
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            transition: all 0.3s ease;
+        }
+        
+        .scanner-input:focus {
+            border-color: #f5576c;
+            box-shadow: 0 0 0 0.2rem rgba(240, 147, 251, 0.25);
+            transform: scale(1.02);
+        }
+        
+        .camera-container {
+            border-radius: 20px;
+            overflow: hidden;
+            background: #000;
+            min-height: 300px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .camera-container canvas, .camera-container video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover;
+        }
+        
+        .scan-result {
+            border-radius: 15px;
+            margin-top: 20px;
+            padding: 20px;
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .btn-scanner {
+            border-radius: 15px;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .btn-scan-primary {
+            background: linear-gradient(45deg, #f093fb, #f5576c);
+            color: white;
+        }
+        
+        .btn-scan-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(240, 147, 251, 0.4);
+        }
+        
+        .btn-scan-success {
+            background: linear-gradient(45deg, #56ab2f, #a8e6cf);
+            color: white;
+        }
+        
+        .btn-scan-danger {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+            color: white;
+        }
+        
+        .scan-stats {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .scan-counter {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #f093fb;
+        }
+        
+        .help-card {
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .scanning-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 1.2rem;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 25px;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg" style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);">
+        <div class="container">
+            <span class="navbar-brand text-white fw-bold">📱 Scanner Intelligent</span>
+            <a href="/" class="btn btn-light btn-sm">
+                <i class="bi bi-arrow-left me-1"></i>Retour
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Stats de scan -->
+        <div class="scan-stats">
+            <div class="row text-center">
+                <div class="col-md-4">
+                    <div class="scan-counter" id="scanCount">0</div>
+                    <div class="text-muted">Scans aujourd'hui</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="scan-counter text-success" id="successCount">0</div>
+                    <div class="text-muted">Succès</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="scan-counter text-danger" id="errorCount">0</div>
+                    <div class="text-muted">Erreurs</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Scanner manuel -->
+            <div class="col-lg-6 mb-4">
+                <div class="scanner-card">
+                    <div class="text-center mb-4">
+                        <h4 class="fw-bold text-primary">
+                            <i class="bi bi-upc-scan me-2"></i>Scanner Manuel
+                        </h4>
+                        <p class="text-muted">Utilisez une douchette ou tapez le code</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <input type="text" class="form-control scanner-input" 
+                               id="codeInput" 
+                               placeholder="Scannez ou tapez le code-barres..."
+                               autofocus>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button class="btn btn-scanner btn-scan-primary" onclick="scannerManuel()">
+                            <i class="bi bi-search me-2"></i>Scanner et Décrémenter
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scanner caméra -->
+            <div class="col-lg-6 mb-4">
+                <div class="scanner-card">
+                    <div class="text-center mb-4">
+                        <h4 class="fw-bold text-success">
+                            <i class="bi bi-camera me-2"></i>Scanner Caméra
+                        </h4>
+                        <div class="d-flex justify-content-center gap-2">
+                            <button id="startCamera" class="btn btn-scan-success btn-sm">
+                                <i class="bi bi-play me-1"></i>Démarrer
+                            </button>
+                            <button id="stopCamera" class="btn btn-scan-danger btn-sm" style="display: none;">
+                                <i class="bi bi-stop me-1"></i>Arrêter
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="cameraContainer" style="display: none;">
+                        <div class="camera-container">
+                            <div id="interactive"></div>
+                            <div class="scanning-indicator" id="scanningIndicator">
+                                <i class="bi bi-camera pulse me-2"></i>Recherche de codes-barres...
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="cameraPlaceholder" class="camera-container d-flex align-items-center justify-content-center">
+                        <div class="text-center text-white">
+                            <i class="bi bi-camera display-1 opacity-50"></i>
+                            <p class="mt-3">Cliquez sur "Démarrer" pour activer la caméra</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Résultats -->
+        <div id="resultats"></div>
+
+        <!-- Aide -->
+        <div class="help-card">
+            <h6 class="fw-bold text-primary mb-3">
+                <i class="bi bi-info-circle me-2"></i>Guide d'utilisation
+            </h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-success">📱 Scanner Manuel</h6>
+                    <ul class="small">
+                        <li>Connectez votre douchette USB/Bluetooth</li>
+                        <li>Pointez vers le code-barres et scannez</li>
+                        <li>Ou tapez le code manuellement</li>
+                        <li>Appuyez Entrée pour valider</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-info">📷 Scanner Caméra</h6>
+                    <ul class="small">
+                        <li>Autorisez l'accès à la caméra</li>
+                        <li>Pointez vers le code-barres</li>
+                        <li>Maintenez stable pour la détection</li>
+                        <li>Scan automatique dès reconnaissance</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="alert alert-info mt-3">
+                <strong>⚡ Action automatique :</strong> 
+                Chaque scan réussi retire automatiquement 1 unité du stock du produit.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isScanning = false;
+        let lastCode = '';
+        let lastTime = 0;
+        let scanCount = 0;
+        let successCount = 0;
+        let errorCount = 0;
+
+        // Scanner manuel
+        document.getElementById('codeInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                scannerManuel();
+            }
+        });
+
+        function scannerManuel() {
+            const code = document.getElementById('codeInput').value.trim();
+            if (!code) return;
+            
+            const currentTime = Date.now();
+            if (code === lastCode && currentTime - lastTime < 2000) {
+                return; // Éviter les doublons
+            }
+            
+            lastCode = code;
+            lastTime = currentTime;
+            
+            processScan(code);
+            document.getElementById('codeInput').value = '';
+            document.getElementById('codeInput').focus();
+        }
+
+        function processScan(code) {
+            scanCount++;
+            updateStats();
+            
+            fetch('/scan', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({code: code})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    successCount++;
+                } else {
+                    errorCount++;
+                }
+                updateStats();
+                afficherResultat(data);
+            })
+            .catch(error => {
+                errorCount++;
+                updateStats();
+                afficherResultat({success: false, message: 'Erreur de connexion'});
+            });
+        }
+
+        function updateStats() {
+            document.getElementById('scanCount').textContent = scanCount;
+            document.getElementById('successCount').textContent = successCount;
+            document.getElementById('errorCount').textContent = errorCount;
+        }
+
+        function afficherResultat(data) {
+            const resultats = document.getElementById('resultats');
+            const alertClass = data.success ? 'alert-success' : 'alert-danger';
+            const icon = data.success ? 'bi-check-circle' : 'bi-x-circle';
+            const bgGradient = data.success ? 
+                'background: linear-gradient(45deg, rgba(86, 171, 47, 0.1), rgba(168, 230, 207, 0.1));' :
+                'background: linear-gradient(45deg, rgba(255, 65, 108, 0.1), rgba(255, 75, 43, 0.1));';
+            
+            resultats.innerHTML = `
+                <div class="scan-result alert ${alertClass} alert-dismissible fade show" style="${bgGradient}">
+                    <div class="d-flex align-items-center">
+                        <i class="bi ${icon} me-3" style="font-size: 1.5rem;"></i>
+                        <div class="flex-grow-1">
+                            <strong>${data.message}</strong>
+                            ${data.produit ? `<br><small>Produit: ${data.produit}</small>` : ''}
+                            ${data.nouveau_stock !== undefined ? `<br><small>Nouveau stock: ${data.nouveau_stock}</small>` : ''}
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+
+            // Auto-masquer après 5 secondes si succès
+            if (data.success) {
+                setTimeout(() => {
+                    const alert = resultats.querySelector('.alert');
+                    if (alert) {
+                        alert.classList.remove('show');
+                        setTimeout(() => alert.remove(), 150);
+                    }
+                }, 5000);
+            }
+        }
+
+        // Scanner caméra
+        document.getElementById('startCamera').addEventListener('click', function() {
+            if (isScanning) return;
+
+            document.getElementById('cameraContainer').style.display = 'block';
+            document.getElementById('cameraPlaceholder').style.display = 'none';
+            document.getElementById('startCamera').style.display = 'none';
+            document.getElementById('stopCamera').style.display = 'inline-block';
+            document.getElementById('scanningIndicator').style.display = 'block';
+            isScanning = true;
+
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: document.querySelector('#interactive'),
+                    constraints: {
+                        width: 640,
+                        height: 480,
+                        facingMode: "environment"
+                    }
+                },
+                locator: {
+                    patchSize: "medium",
+                    halfSample: true
+                },
+                numOfWorkers: 2,
+                frequency: 10,
+                decoder: {
+                    readers: [
+                        "code_128_reader",
+                        "ean_reader", 
+                        "ean_8_reader",
+                        "code_39_reader",
+                        "upc_reader"
+                    ]
+                },
+                locate: true
+            }, function(err) {
+                if (err) {
+                    console.error('Erreur caméra:', err);
+                    afficherResultat({success: false, message: 'Erreur caméra: ' + err.message});
+                    stopCamera();
+                    return;
+                }
+                Quagga.start();
+                document.getElementById('scanningIndicator').style.display = 'none';
+            });
+
+            Quagga.onDetected(function(data) {
+                const code = data.codeResult.code;
+                
+                // Pause temporaire pour éviter les scans multiples
+                Quagga.stop();
+                document.getElementById('scanningIndicator').style.display = 'block';
+                
+                processScan(code);
+                
+                // Reprendre après 2 secondes
+                setTimeout(() => {
+                    if (isScanning) {
+                        Quagga.start();
+                        document.getElementById('scanningIndicator').style.display = 'none';
+                    }
+                }, 2000);
+            });
+        });
+
+        document.getElementById('stopCamera').addEventListener('click', stopCamera);
+
+        function stopCamera() {
+            if (!isScanning) return;
+
+            Quagga.stop();
+            document.getElementById('cameraContainer').style.display = 'none';
+            document.getElementById('cameraPlaceholder').style.display = 'flex';
+            document.getElementById('startCamera').style.display = 'inline-block';
+            document.getElementById('stopCamera').style.display = 'none';
+            document.getElementById('scanningIndicator').style.display = 'none';
+            isScanning = false;
+        }
+
+        // Raccourcis clavier
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                stopCamera();
+            }
+        });
+
+        // Animation d'entrée
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.scanner-card, .scan-stats');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 200);
+            });
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

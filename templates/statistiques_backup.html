@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Statistiques</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { font-family: 'Poppins', sans-serif; }
+        
+        body { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .metric-card {
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+            border-top: 4px solid #667eea;
+        }
+        
+        .metric-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .metric-label {
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg" style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);">
+        <div class="container">
+            <span class="navbar-brand text-white fw-bold">📊 Statistiques</span>
+            <a href="/" class="btn btn-light btn-sm">
+                <i class="bi bi-arrow-left me-1"></i>Retour
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Métriques principales -->
+        <div class="row">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="metric-card">
+                    <div class="metric-number text-primary">{{ stats.total_produits }}</div>
+                    <div class="metric-label">Produits Total</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="metric-card">
+                    <div class="metric-number text-success">{{ stats.valeur_stock }}€</div>
+                    <div class="metric-label">Valeur Stock</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="metric-card">
+                    <div class="metric-number text-danger">{{ stats.ruptures }}</div>
+                    <div class="metric-label">Ruptures</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="metric-card">
+                    <div class="metric-number text-warning">{{ stats.stock_faible }}</div>
+                    <div class="metric-label">Stock Faible</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graphique des catégories -->
+        <div class="stats-card">
+            <h5 class="fw-bold mb-4">
+                <i class="bi bi-pie-chart me-2"></i>Répartition par Catégories
+            </h5>
+            <div class="chart-container">
+                <canvas id="categoriesChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Top catégories -->
+        <div class="stats-card">
+            <h5 class="fw-bold mb-4">
+                <i class="bi bi-bar-chart me-2"></i>Top Catégories
+            </h5>
+            {% if stats.top_categories %}
+            {% for cat_data in stats.top_categories %}
+            <div class="d-flex justify-content-between align-items-center mb-3 p-3" style="background: #f8f9fa; border-radius: 10px;">
+                <div class="d-flex align-items-center">
+                    {% for cat in categories %}
+                        {% if cat.nom == cat_data.categorie %}
+                            <span class="me-3" style="font-size: 1.5em;">{{ cat.emoji }}</span>
+                        {% endif %}
+                    {% endfor %}
+                    <div>
+                        <div class="fw-bold">{{ cat_data.categorie }}</div>
+                        <small class="text-muted">{{ cat_data.count }} produits</small>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-primary">{{ cat_data.stock_total or 0 }} en stock</span>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="text-center py-4 text-muted">
+                <i class="bi bi-folder display-4"></i>
+                <p class="mt-2">Aucune donnée disponible</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // Graphique des catégories
+        const ctx = document.getElementById('categoriesChart').getContext('2d');
+        const categoriesData = {{ stats.top_categories | tojson }};
+        
+        const labels = categoriesData.map(item => item.categorie);
+        const data = categoriesData.map(item => item.count);
+        const colors = [
+            '#667eea', '#764ba2', '#f093fb', '#f5576c',
+            '#4facfe', '#00f2fe', '#56ab2f', '#a8e6cf',
+            '#ff416c', '#ff4b2b'
+        ];
+
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: colors.slice(0, data.length),
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+
+        // Animation d'entrée
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.metric-card, .stats-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>

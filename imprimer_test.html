@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Codes-Barres Test à Imprimer</title>
+    <style>
+        @page { size: A4; margin: 2cm; }
+        body { font-family: Arial; }
+        .barcode-box { 
+            page-break-inside: avoid;
+            border: 2px solid #000;
+            padding: 30px;
+            margin: 20px 0;
+            text-align: center;
+            background: white;
+        }
+        h1 { text-align: center; }
+        svg { margin: 20px 0; }
+        .info { font-size: 18px; margin: 10px 0; }
+        .code { font-size: 24px; font-weight: bold; font-family: 'Courier New'; }
+    </style>
+</head>
+<body>
+    <h1>🧪 CODES-BARRES DE TEST - À IMPRIMER</h1>
+    <p style="text-align: center;">Imprimez cette page et scannez les codes-barres avec votre caméra</p>
+
+    <div class="barcode-box">
+        <h2>Test #1</h2>
+        <svg id="barcode1"></svg>
+        <div class="code">1234567890123</div>
+        <div class="info">Écran iPhone 12 - 299.99€</div>
+    </div>
+
+    <div class="barcode-box">
+        <h2>Test #2</h2>
+        <svg id="barcode2"></svg>
+        <div class="code">2345678901234</div>
+        <div class="info">Batterie Samsung S21 - 49.99€</div>
+    </div>
+
+    <div class="barcode-box">
+        <h2>Test #3</h2>
+        <svg id="barcode3"></svg>
+        <div class="code">3456789012345</div>
+        <div class="info">Coque iPhone 13 Pro - 19.99€</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script>
+        JsBarcode("#barcode1", "1234567890123", {
+            format: "CODE128",
+            width: 4,
+            height: 150,
+            displayValue: true,
+            fontSize: 30,
+            margin: 20
+        });
+
+        JsBarcode("#barcode2", "2345678901234", {
+            format: "CODE128",
+            width: 4,
+            height: 150,
+            displayValue: true,
+            fontSize: 30,
+            margin: 20
+        });
+
+        JsBarcode("#barcode3", "3456789012345", {
+            format: "CODE128",
+            width: 4,
+            height: 150,
+            displayValue: true,
+            fontSize: 30,
+            margin: 20
+        });
+
+        // Auto-print dialog
+        setTimeout(() => {
+            if (confirm('Voulez-vous imprimer cette page maintenant ?')) {
+                window.print();
+            }
+        }, 500);
+    </script>
+</body>
+</html>

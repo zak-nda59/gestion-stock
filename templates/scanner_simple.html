@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner Simple</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background: #f4f6f9; font-family: 'Segoe UI', sans-serif; padding: 20px; }
+        .scanner-container { max-width: 800px; margin: 0 auto; }
+        .card { border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .video-container { 
+            position: relative; 
+            background: #000; 
+            border-radius: 8px; 
+            overflow: hidden;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #interactive { 
+            width: 100%; 
+            height: auto;
+        }
+        #interactive.viewport canvas, 
+        #interactive.viewport video {
+            width: 100% !important;
+            height: auto !important;
+        }
+        .scan-line {
+            position: absolute;
+            width: 80%;
+            height: 2px;
+            background: #00ff00;
+            left: 10%;
+            animation: scan 2s ease-in-out infinite;
+            z-index: 100;
+        }
+        @keyframes scan {
+            0%, 100% { top: 20%; }
+            50% { top: 80%; }
+        }
+        .detection-count {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,255,0,0.8);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            z-index: 101;
+        }
+        .log-box {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+        .log-entry { margin: 2px 0; }
+        .log-error { color: #ff6b6b; }
+        .log-success { color: #51cf66; }
+        .log-info { color: #74c0fc; }
+    </style>
+</head>
+<body>
+    <div class="scanner-container">
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-camera-video me-2"></i>Scanner de Codes-Barres Simplifié</h5>
+            </div>
+            <div class="card-body">
+                <!-- Statut -->
+                <div id="status" class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <span id="statusText">Prêt à scanner. Cliquez sur "Démarrer le Scanner"</span>
+                </div>
+
+                <!-- Boutons -->
+                <div class="d-grid gap-2 mb-3">
+                    <button id="startBtn" class="btn btn-success btn-lg" onclick="startScanner()">
+                        <i class="bi bi-play-circle me-2"></i>Démarrer le Scanner
+                    </button>
+                    <button id="stopBtn" class="btn btn-danger btn-lg" onclick="stopScanner()" style="display:none;">
+                        <i class="bi bi-stop-circle me-2"></i>Arrêter le Scanner
+                    </button>
+                </div>
+
+                <!-- Zone vidéo -->
+                <div class="video-container" id="videoContainer" style="display:none;">
+                    <div id="interactive" class="viewport"></div>
+                    <div class="scan-line"></div>
+                    <div class="detection-count">
+                        <i class="bi bi-cpu me-1"></i>
+                        <span id="detectionCount">0</span> détections
+                    </div>
+                </div>
+
+                <!-- Saisie manuelle alternative -->
+                <div class="mt-3">
+                    <label class="form-label"><strong>Ou saisie manuelle :</strong></label>
+                    <div class="input-group">
+                        <input type="text" id="manualInput" class="form-control" placeholder="Tapez ou scannez avec douchette..." autofocus>
+                        <button class="btn btn-primary" onclick="searchManual()">
+                            <i class="bi bi-search"></i> Rechercher
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Résultat -->
+                <div id="result" style="display:none;" class="mt-3"></div>
+
+                <!-- Console de diagnostic -->
+                <div class="mt-3">
+                    <button class="btn btn-sm btn-secondary" onclick="toggleLog()">
+                        <i class="bi bi-terminal me-1"></i>Afficher/Masquer Console
+                    </button>
+                    <div id="logBox" class="log-box" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <a href="/" class="btn btn-outline-secondary">
+                <i class="bi bi-house me-1"></i>Retour à l'Accueil
+            </a>
+            <a href="/test-scanner" class="btn btn-outline-primary">
+                <i class="bi bi-wrench me-1"></i>Page de Test
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
+    <script>
+        let isScanning = false;
+        let detectionCount = 0;
+        let lastCode = '';
+        let lastCodeTime = 0;
+
+        function log(message, type = 'info') {
+            const logBox = document.getElementById('logBox');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            const time = new Date().toLocaleTimeString();
+            entry.textContent = `[${time}] ${message}`;
+            logBox.appendChild(entry);
+            logBox.scrollTop = logBox.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function toggleLog() {
+            const logBox = document.getElementById('logBox');
+            logBox.style.display = logBox.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function updateStatus(text, type = 'info') {
+            const status = document.getElementById('status');
+            const statusText = document.getElementById('statusText');
+            status.className = `alert alert-${type}`;
+            statusText.textContent = text;
+            log(text, type);
+        }
+
+        function startScanner() {
+            log('=== DÉMARRAGE DU SCANNER ===', 'info');
+            
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('stopBtn').style.display = 'block';
+            document.getElementById('videoContainer').style.display = 'block';
+            
+            updateStatus('Demande d\'accès à la caméra...', 'warning');
+            isScanning = true;
+            detectionCount = 0;
+
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: document.querySelector('#interactive'),
+                    constraints: {
+                        width: { min: 640, ideal: 1280, max: 1920 },
+                        height: { min: 480, ideal: 720, max: 1080 },
+                        facingMode: "environment",
+                        aspectRatio: { min: 1, max: 2 }
+                    }
+                },
+                locator: {
+                    patchSize: "medium",
+                    halfSample: true
+                },
+                numOfWorkers: navigator.hardwareConcurrency || 4,
+                decoder: {
+                    readers: [
+                        "code_128_reader",
+                        "ean_reader",
+                        "ean_8_reader",
+                        "code_39_reader",
+                        "code_39_vin_reader",
+                        "codabar_reader",
+                        "upc_reader",
+                        "upc_e_reader",
+                        "i2of5_reader"
+                    ],
+                    multiple: false
+                },
+                locate: true,
+                frequency: 10
+            }, function(err) {
+                if (err) {
+                    log('ERREUR: ' + err.message, 'error');
+                    updateStatus('❌ Erreur d\'accès à la caméra: ' + err.message, 'danger');
+                    stopScanner();
+                    return;
+                }
+                
+                log('✓ Caméra initialisée avec succès', 'success');
+                updateStatus('✓ Caméra active ! Pointez vers un code-barres...', 'success');
+                Quagga.start();
+                log('✓ Scanner démarré', 'success');
+            });
+
+            // Événement de détection
+            Quagga.onDetected(onDetected);
+
+            // Événement de traitement (pour debug)
+            Quagga.onProcessed(function(result) {
+                if (result && result.codeResult && result.codeResult.code) {
+                    detectionCount++;
+                    document.getElementById('detectionCount').textContent = detectionCount;
+                }
+            });
+        }
+
+        function onDetected(result) {
+            if (!isScanning) return;
+
+            const code = result.codeResult.code;
+            const now = Date.now();
+
+            // Éviter les doublons rapides
+            if (code === lastCode && (now - lastCodeTime) < 2000) {
+                return;
+            }
+
+            lastCode = code;
+            lastCodeTime = now;
+
+            log(`📷 CODE DÉTECTÉ: ${code}`, 'success');
+            
+            // Vibration
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200]);
+            }
+
+            // Bip sonore
+            playBeep();
+
+            // Arrêter le scan
+            stopScanner();
+
+            // Rechercher le produit
+            searchProduct(code);
+        }
+
+        function stopScanner() {
+            if (Quagga) {
+                Quagga.stop();
+                Quagga.offDetected(onDetected);
+                log('Scanner arrêté', 'info');
+            }
+            isScanning = false;
+            document.getElementById('startBtn').style.display = 'block';
+            document.getElementById('stopBtn').style.display = 'none';
+            document.getElementById('videoContainer').style.display = 'none';
+            updateStatus('Scanner arrêté', 'secondary');
+        }
+
+        async function searchProduct(code) {
+            updateStatus(`Recherche du produit ${code}...`, 'info');
+            
+            try {
+                const response = await fetch(`/api/produit/${code}`);
+                const data = await response.json();
+
+                const resultDiv = document.getElementById('result');
+                resultDiv.style.display = 'block';
+
+                if (data.success && data.produit) {
+                    log(`✓ PRODUIT TROUVÉ: ${data.produit.nom}`, 'success');
+                    updateStatus('✓ Produit trouvé !', 'success');
+                    
+                    resultDiv.className = 'alert alert-success';
+                    resultDiv.innerHTML = `
+                        <h5><i class="bi bi-check-circle me-2"></i>Produit Trouvé !</h5>
+                        <h4>${data.produit.nom}</h4>
+                        <p class="mb-2">
+                            <strong>Prix:</strong> ${data.produit.prix}€ | 
+                            <strong>Stock:</strong> ${data.produit.stock} | 
+                            <strong>Catégorie:</strong> ${data.produit.categorie}
+                        </p>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary" onclick="adjustStock(${data.produit.id}, 'ajouter')">
+                                <i class="bi bi-plus-circle me-1"></i>Ajouter au Stock
+                            </button>
+                            <button class="btn btn-warning" onclick="adjustStock(${data.produit.id}, 'retirer')">
+                                <i class="bi bi-dash-circle me-1"></i>Retirer du Stock
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="resetScan()">
+                                <i class="bi bi-arrow-repeat me-1"></i>Scanner un Autre Produit
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    log(`✗ Produit non trouvé: ${code}`, 'error');
+                    updateStatus('⚠️ Produit non trouvé', 'warning');
+                    
+                    resultDiv.className = 'alert alert-warning';
+                    resultDiv.innerHTML = `
+                        <h5><i class="bi bi-exclamation-triangle me-2"></i>Produit Non Trouvé</h5>
+                        <p>Le code-barres <code>${code}</code> n'existe pas dans votre inventaire.</p>
+                        <button class="btn btn-primary" onclick="resetScan()">
+                            <i class="bi bi-arrow-repeat me-1"></i>Réessayer
+                        </button>
+                    `;
+                }
+            } catch (error) {
+                log(`ERREUR API: ${error.message}`, 'error');
+                updateStatus('❌ Erreur de recherche', 'danger');
+                
+                const resultDiv = document.getElementById('result');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'alert alert-danger';
+                resultDiv.innerHTML = `
+                    <h5><i class="bi bi-x-circle me-2"></i>Erreur</h5>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+
+        function searchManual() {
+            const code = document.getElementById('manualInput').value.trim();
+            if (!code) {
+                alert('Veuillez entrer un code-barres');
+                return;
+            }
+            log(`Recherche manuelle: ${code}`, 'info');
+            searchProduct(code);
+        }
+
+        function resetScan() {
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('manualInput').value = '';
+            updateStatus('Prêt à scanner', 'info');
+        }
+
+        function adjustStock(productId, action) {
+            const quantity = prompt(`Quantité à ${action === 'ajouter' ? 'ajouter' : 'retirer'} ?`, '1');
+            if (!quantity || isNaN(quantity)) return;
+
+            fetch('/ajuster-stock', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    produit_id: productId,
+                    action: action,
+                    quantite: parseInt(quantity)
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    log(`✓ Stock ${action}: ${quantity}`, 'success');
+                    alert('✅ ' + data.message);
+                    resetScan();
+                } else {
+                    log(`✗ Erreur stock: ${data.message}`, 'error');
+                    alert('❌ ' + data.message);
+                }
+            })
+            .catch(error => {
+                log(`ERREUR: ${error.message}`, 'error');
+                alert('Erreur: ' + error.message);
+            });
+        }
+
+        function playBeep() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            gainNode.gain.value = 0.3;
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+
+        // Permettre Enter sur saisie manuelle
+        document.getElementById('manualInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchManual();
+            }
+        });
+
+        // Nettoyage à la fermeture
+        window.addEventListener('beforeunload', stopScanner);
+    </script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gérer les Catégories</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
+        .navbar { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .container-main { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
+        .form-card { background: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .category-card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 15px; transition: transform 0.2s; }
+        .category-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+        .emoji-preview { font-size: 2rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand fw-bold" href="/"><i class="bi bi-box-seam me-2"></i>Inventaire</a>
+            <div class="navbar-nav ms-auto d-flex flex-row gap-3">
+                <a class="nav-link" href="/"><i class="bi bi-house"></i> Accueil</a>
+                <a class="nav-link" href="/produits"><i class="bi bi-list-ul"></i> Produits</a>
+                <a class="nav-link" href="/ajouter"><i class="bi bi-plus-circle"></i> Ajouter</a>
+                <a class="nav-link active" href="/categories"><i class="bi bi-folder"></i> Catégories</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-main">
+        <!-- Formulaire de création -->
+        <div class="form-card">
+            <h4 class="mb-4"><i class="bi bi-folder-plus me-2"></i>Créer une Nouvelle Catégorie</h4>
+            
+            {% if error %}
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+            </div>
+            {% endif %}
+
+            <form method="POST">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">Nom de la Catégorie *</label>
+                        <input type="text" name="nom" class="form-control" required placeholder="Ex: Téléphones">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label fw-semibold">Emoji</label>
+                        <input type="text" name="emoji" class="form-control" value="📦" placeholder="📦" maxlength="2">
+                        <small class="text-muted">Copier-coller un emoji</small>
+                    </div>
+                    <div class="col-md-3 mb-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-plus-circle me-2"></i>Créer
+                        </button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Description (optionnel)</label>
+                    <input type="text" name="description" class="form-control" placeholder="Ex: Smartphones et accessoires">
+                </div>
+            </form>
+        </div>
+
+        <!-- Liste des catégories -->
+        <div class="form-card">
+            <h4 class="mb-4"><i class="bi bi-list-ul me-2"></i>Mes Catégories ({{ categories|length }})</h4>
+            
+            {% if categories %}
+            <div class="row">
+                {% for cat in categories %}
+                <div class="col-md-6 mb-3">
+                    <div class="category-card d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="emoji-preview">{{ cat.emoji }}</div>
+                            <div>
+                                <h6 class="mb-0">{{ cat.nom }}</h6>
+                                {% if cat.description %}
+                                <small class="text-muted">{{ cat.description }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div>
+                            <a href="/supprimer-categorie/{{ cat.id }}" 
+                               class="btn btn-sm btn-outline-danger"
+                               onclick="return confirm('Supprimer la catégorie {{ cat.nom }} ?')">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Aucune catégorie</strong> - Créez votre première catégorie ci-dessus !
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Info -->
+        <div class="alert alert-light">
+            <i class="bi bi-lightbulb me-2"></i>
+            <strong>Astuce :</strong> Les catégories créées ici seront disponibles lors de l'ajout d'un nouveau produit.
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

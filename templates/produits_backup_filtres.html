@@ -1,0 +1,88 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des Produits</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
+        .navbar { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .container-main { max-width: 1400px; margin: 30px auto; padding: 0 20px; }
+        .table-card { background: white; border-radius: 8px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .search-box { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand fw-bold" href="/"><i class="bi bi-box-seam me-2"></i>Inventaire</a>
+            <div class="navbar-nav ms-auto d-flex flex-row gap-3">
+                <a class="nav-link" href="/"><i class="bi bi-house"></i> Accueil</a>
+                <a class="nav-link active" href="/produits"><i class="bi bi-list-ul"></i> Produits</a>
+                <a class="nav-link" href="/ajouter"><i class="bi bi-plus-circle"></i> Ajouter</a>
+                <a class="nav-link" href="/scanner"><i class="bi bi-upc-scan"></i> Scanner</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-main">
+        <div class="search-box">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <form method="GET" class="d-flex gap-2">
+                        <input type="text" name="recherche" class="form-control" placeholder="Rechercher un produit..." value="{{ recherche or '' }}">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search"></i> Rechercher
+                        </button>
+                    </form>
+                </div>
+                <div class="col-md-4 text-end">
+                    <span class="badge bg-primary fs-6">{{ produits|length }} produit(s)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <h5 class="mb-3"><i class="bi bi-list-ul me-2"></i>Tous les Produits</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Produit</th>
+                            <th>Code-barres</th>
+                            <th>Prix</th>
+                            <th>Stock</th>
+                            <th>Catégorie</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for produit in produits %}
+                        <tr>
+                            <td class="fw-semibold">{{ produit.nom }}</td>
+                            <td><code>{{ produit.code_barres }}</code></td>
+                            <td><strong>{{ "%.2f"|format(produit.prix) }}€</strong></td>
+                            <td>
+                                <span class="badge {% if produit.stock == 0 %}bg-danger{% elif produit.stock <= 5 %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                                    {{ produit.stock }}
+                                </span>
+                            </td>
+                            <td><small class="text-muted">{{ produit.categorie }}</small></td>
+                            <td class="text-end">
+                                <a href="/modifier/{{ produit.id }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Scanner</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; background: #f4f6f9; }
+        .test-card { background: white; padding: 30px; border-radius: 8px; max-width: 800px; margin: 0 auto; }
+        .barcode-display { background: white; padding: 30px; border: 2px solid #dee2e6; border-radius: 8px; margin: 20px 0; text-align: center; }
+        .result { margin-top: 20px; padding: 20px; background: #e7f1ff; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="test-card">
+        <h3>🧪 Test du Scanner de Codes-Barres</h3>
+        <p class="text-muted">Cette page vous permet de tester si vos codes-barres sont scannables</p>
+
+        <!-- Affichage des codes-barres de test -->
+        <div class="barcode-display">
+            <h5>Code-barres de Test #1</h5>
+            <svg id="barcode1"></svg>
+            <p class="mt-2"><code>1234567890123</code> (Écran iPhone 12)</p>
+        </div>
+
+        <div class="barcode-display">
+            <h5>Code-barres de Test #2</h5>
+            <svg id="barcode2"></svg>
+            <p class="mt-2"><code>2345678901234</code> (Batterie Samsung)</p>
+        </div>
+
+        <div class="barcode-display">
+            <h5>Code-barres de Test #3</h5>
+            <svg id="barcode3"></svg>
+            <p class="mt-2"><code>3456789012345</code> (Coque iPhone 13)</p>
+        </div>
+
+        <!-- Instructions -->
+        <div class="alert alert-info mt-4">
+            <h6><i class="bi bi-info-circle me-2"></i>Comment tester :</h6>
+            <ol class="mb-0">
+                <li><strong>Imprimez cette page</strong> (CTRL+P)</li>
+                <li>Ou <strong>affichez-la en plein écran</strong> sur un autre appareil</li>
+                <li>Allez sur <a href="/scanner" target="_blank">/scanner</a></li>
+                <li>Cliquez "Caméra" puis "Démarrer la Caméra"</li>
+                <li><strong>Pointez vers un des codes-barres ci-dessus</strong></li>
+                <li>Le produit devrait être détecté automatiquement !</li>
+            </ol>
+        </div>
+
+        <!-- Zone de test manuel -->
+        <div class="mt-4">
+            <h5>Test de Saisie Manuelle</h5>
+            <p>Ou testez en saisissant manuellement :</p>
+            <input type="text" class="form-control mb-2" id="testInput" placeholder="Tapez un code-barres">
+            <button onclick="testCode()" class="btn btn-primary">Tester ce Code</button>
+            <div id="testResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="/" class="btn btn-outline-secondary">← Retour à l'Accueil</a>
+            <a href="/scanner" class="btn btn-primary">Aller au Scanner</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script>
+        // Générer les codes-barres de test
+        JsBarcode("#barcode1", "1234567890123", {
+            format: "CODE128",
+            width: 3,
+            height: 100,
+            displayValue: true,
+            fontSize: 20
+        });
+
+        JsBarcode("#barcode2", "2345678901234", {
+            format: "CODE128",
+            width: 3,
+            height: 100,
+            displayValue: true,
+            fontSize: 20
+        });
+
+        JsBarcode("#barcode3", "3456789012345", {
+            format: "CODE128",
+            width: 3,
+            height: 100,
+            displayValue: true,
+            fontSize: 20
+        });
+
+        async function testCode() {
+            const code = document.getElementById('testInput').value.trim();
+            const resultDiv = document.getElementById('testResult');
+            
+            if (!code) {
+                alert('Veuillez entrer un code-barres');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/produit/${code}`);
+                const data = await response.json();
+
+                resultDiv.style.display = 'block';
+
+                if (data.success && data.produit) {
+                    resultDiv.className = 'result bg-success text-white';
+                    resultDiv.innerHTML = `
+                        <h6>✅ PRODUIT TROUVÉ !</h6>
+                        <p class="mb-0"><strong>${data.produit.nom}</strong></p>
+                        <p class="mb-0">Prix: ${data.produit.prix}€ | Stock: ${data.produit.stock}</p>
+                        <p class="mb-0">Catégorie: ${data.produit.categorie}</p>
+                    `;
+                } else {
+                    resultDiv.className = 'result bg-warning';
+                    resultDiv.innerHTML = `
+                        <h6>⚠️ PRODUIT NON TROUVÉ</h6>
+                        <p class="mb-0">Le code-barres "${code}" n'existe pas dans votre inventaire</p>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result bg-danger text-white';
+                resultDiv.innerHTML = `
+                    <h6>❌ ERREUR</h6>
+                    <p class="mb-0">${error.message}</p>
+                `;
+            }
+        }
+
+        // Permettre Enter pour tester
+        document.getElementById('testInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                testCode();
+            }
+        });
+    </script>
+</body>
+</html>
