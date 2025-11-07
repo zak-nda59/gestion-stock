@@ -974,48 +974,47 @@ def favicon():
     """Favicon simple"""
     return '', 204
 
+# Initialisation de la base de données au démarrage de l'application
+try:
+    init_database()
+    print("✅ Base de données SQLite initialisée")
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT COUNT(*) FROM produits')
+    count = cursor.fetchone()[0]
+    conn.close()
+    
+    print(f"📦 {count} produits en base")
+    
+except Exception as e:
+    print(f"⚠️ Initialisation base de données: {e}")
+    print("La base sera créée à la première requête")
+
 if __name__ == '__main__':
-    print("ðŸš€ BOUTIQUE MOBILE - VERSION MINIMALE")
+    print("🚀 BOUTIQUE MOBILE - VERSION MINIMALE")
     print("=" * 50)
     
-    # Initialisation de la base de donnÃ©es
-    try:
-        init_database()
-        print("âœ… Base de donnÃ©es SQLite initialisÃ©e")
-        
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT COUNT(*) FROM produits')
-        count = cursor.fetchone()[0]
-        conn.close()
-        
-        print(f"ðŸ“¦ {count} produits en base")
-        
-    except Exception as e:
-        print(f"âŒ Erreur initialisation: {e}")
+    print("🌐 Application locale prête")
+    print("📱 Accès: http://localhost:5000")
+    print("🔧 Fonctionnalités disponibles:")
+    print("   ✅ Gestion des produits (CRUD)")
+    print("   ✅ Scanner codes-barres (caméra + douchette)")
+    print("   ✅ Filtres et tris avancés")
+    print("   ✅ Statistiques avec graphiques")
+    print("   ✅ Alertes ruptures/stock faible")
+    print("   ✅ Génération de codes-barres (SVG)")
+    print("   ✅ Export CSV/Excel")
+    print("   ✅ API JSON (produits + stats)")
+    print("   ✅ Interface responsive")
+    print("   ✅ Base de données persistante")
     
-    print("ðŸŒ Application locale prÃªte")
-    print("ðŸ“± AccÃ¨s: http://localhost:5000")
-    print("ðŸ”§ FonctionnalitÃ©s disponibles:")
-    print("   âœ… Gestion des produits (CRUD)")
-    print("   âœ… Scanner codes-barres (camÃ©ra + douchette)")
-    print("   âœ… Filtres et tris avancÃ©s")
-    print("   âœ… Statistiques avec graphiques")
-    print("   âœ… Alertes ruptures/stock faible")
-    print("   âœ… GÃ©nÃ©ration de codes-barres (SVG)")
-    print("   âœ… Export CSV/Excel")
-    print("   âœ… API JSON (produits + stats)")
-    print("   âœ… Interface responsive")
-    print("   âœ… Base de donnÃ©es persistante")
-    
-    # Lancement accessible depuis le rÃ©seau
-    print("ðŸ“± Pour accÃ©der depuis votre tÃ©lÃ©phone:")
-    print("   1. Connectez votre tÃ©lÃ©phone au mÃªme WiFi")
+    # Lancement accessible depuis le réseau
+    print("📱 Pour accéder depuis votre téléphone:")
+    print("   1. Connectez votre téléphone au même WiFi")
     print("   2. Ouvrez votre navigateur mobile")
     print("   3. Allez sur: http://192.168.0.154:5000")
-    print("   (Remplacez l'IP par celle affichÃ©e ci-dessus)")
+    print("   (Remplacez l'IP par celle affichée ci-dessus)")
     print()
     
     app.run(host='0.0.0.0', port=5000, debug=True)
-
-
