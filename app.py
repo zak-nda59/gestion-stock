@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-ðŸš€ BOUTIQUE MOBILE - VERSION COMPLÃˆTE
-Application de gestion d'inventaire complÃ¨te - Flask + SQLite
+🚀 BOUTIQUE MOBILE - VERSION COMPLÈTE
+Application de gestion d'inventaire complète - Flask + SQLite/PostgreSQL
 """
 
 import os
@@ -13,96 +13,153 @@ import csv
 
 app = Flask(__name__)
 
+# Détection automatique : PostgreSQL (production) ou SQLite (local)
+DATABASE_URL = os.environ.get('DATABASE_URL', '')
+USE_POSTGRES = DATABASE_URL.startswith('postgres')
+
+if USE_POSTGRES:
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+    # Fix pour Render (postgres:// → postgresql://)
+    if DATABASE_URL.startswith('postgres://'):
+        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+
 def get_db_connection():
-    """Connexion SQLite locale"""
-    conn = sqlite3.connect('boutique_mobile.db')
-    conn.row_factory = sqlite3.Row
-    return conn
+    """Connexion universelle SQLite (local) ou PostgreSQL (production)"""
+    if USE_POSTGRES:
+        conn = psycopg2.connect(DATABASE_URL)
+        return conn
+    else:
+        conn = sqlite3.connect('boutique_mobile.db')
+        conn.row_factory = sqlite3.Row
+        return conn
 
 def init_database():
-    """Initialise la base de donnÃ©es SQLite"""
+    """Initialise la base de données (PostgreSQL ou SQLite)"""
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Table catÃ©gories
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS categories (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nom TEXT NOT NULL UNIQUE,
-            emoji TEXT DEFAULT 'ðŸ“¦',
-            description TEXT,
-            date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
+    # Syntaxe SQL adaptée selon la base
+    if USE_POSTGRES:
+        # PostgreSQL
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS categories (
+                id SERIAL PRIMARY KEY,
+                nom TEXT NOT NULL UNIQUE,
+                emoji TEXT DEFAULT '📦',
+                description TEXT,
+                date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS produits (
+                id SERIAL PRIMARY KEY,
+                nom TEXT NOT NULL,
+                code_barres TEXT UNIQUE NOT NULL,
+                prix REAL NOT NULL,
+                stock INTEGER NOT NULL DEFAULT 0,
+                categorie TEXT DEFAULT 'Autre',
+                date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        placeholder = '%s'
+        insert_ignore = 'INSERT INTO categories (emoji, nom, description) VALUES (%s, %s, %s) ON CONFLICT (nom) DO NOTHING'
+    else:
+        # SQLite
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS categories (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nom TEXT NOT NULL UNIQUE,
+                emoji TEXT DEFAULT '📦',
+                description TEXT,
+                date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS produits (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nom TEXT NOT NULL,
+                code_barres TEXT UNIQUE NOT NULL,
+                prix REAL NOT NULL,
+                stock INTEGER NOT NULL DEFAULT 0,
+                categorie TEXT DEFAULT 'Autre',
+                date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        placeholder = '?'
+        insert_ignore = 'INSERT OR IGNORE INTO categories (emoji, nom, description) VALUES (?, ?, ?)'
     
-    # Table produits
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS produits (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nom TEXT NOT NULL,
-            code_barres TEXT UNIQUE NOT NULL,
-            prix REAL NOT NULL,
-            stock INTEGER NOT NULL DEFAULT 0,
-            categorie TEXT DEFAULT 'Autre',
-            date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    
-    # CatÃ©gories par dÃ©faut
+    # Catégories par défaut
     categories_defaut = [
-        ('ðŸ“±', 'Ã‰cran', 'Ã‰crans et dalles tactiles'),
-        ('ðŸ”‹', 'Batterie', 'Batteries et accumulateurs'),
-        ('ðŸ›¡ï¸', 'Coque', 'Coques et Ã©tuis de protection'),
-        ('ðŸ“Ž', 'Accessoire', 'Accessoires divers'),
-        ('ðŸ”Œ', 'CÃ¢ble', 'CÃ¢bles et chargeurs'),
-        ('ðŸ”§', 'Outil', 'Outils de rÃ©paration'),
-        ('ðŸ’¾', 'Composant', 'Composants Ã©lectroniques'),
-        ('ðŸŽ§', 'Audio', 'Ã‰couteurs et haut-parleurs'),
-        ('ðŸ“¦', 'Autre', 'Autres produits')
+        ('📱', 'Écran', 'Écrans et dalles tactiles'),
+        ('🔋', 'Batterie', 'Batteries et accumulateurs'),
+        ('🛡️', 'Coque', 'Coques et étuis de protection'),
+        ('🔍', 'Accessoire', 'Accessoires divers'),
+        ('🔌', 'Câble', 'Câbles et chargeurs'),
+        ('🔧', 'Outil', 'Outils de réparation'),
+        ('💾', 'Composant', 'Composants électroniques'),
+        ('🎧', 'Audio', 'Écouteurs et haut-parleurs'),
+        ('📦', 'Autre', 'Autres produits')
     ]
     
     for emoji, nom, desc in categories_defaut:
         try:
-            cursor.execute(
-                'INSERT OR IGNORE INTO categories (emoji, nom, description) VALUES (?, ?, ?)',
-                (emoji, nom, desc)
-            )
+            cursor.execute(insert_ignore, (emoji, nom, desc))
         except:
             pass
     
     # Produits d'exemple (seulement si aucun produit existe)
     cursor.execute('SELECT COUNT(*) as count FROM produits')
     result = cursor.fetchone()
-    count = result[0]
+    count = result[0] if USE_POSTGRES else result[0]
     
     if count == 0:
         produits_exemple = [
-            ('Ã‰cran iPhone 12', '1234567890123', 45.99, 15, 'Ã‰cran'),
+            ('Écran iPhone 12', '1234567890123', 45.99, 15, 'Écran'),
             ('Batterie Samsung S21', '2345678901234', 29.99, 8, 'Batterie'),
             ('Coque iPhone 13 Pro', '3456789012345', 12.99, 25, 'Coque'),
-            ('CÃ¢ble USB-C 2m', '4567890123456', 8.99, 30, 'CÃ¢ble'),
-            ('Ã‰couteurs Bluetooth', '5678901234567', 19.99, 12, 'Audio'),
+            ('Câble USB-C 2m', '4567890123456', 8.99, 30, 'Câble'),
+            ('Écouteurs Bluetooth', '5678901234567', 19.99, 12, 'Audio'),
             ('Tournevis Kit', '6789012345678', 15.99, 5, 'Outil'),
-            ('Chargeur Rapide', '7890123456789', 24.99, 18, 'CÃ¢ble')
+            ('Chargeur Rapide', '7890123456789', 24.99, 18, 'Câble')
         ]
+        
+        insert_produit = f'INSERT INTO produits (nom, code_barres, prix, stock, categorie) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})'
         
         for nom, code, prix, stock, cat in produits_exemple:
             try:
-                cursor.execute(
-                    'INSERT INTO produits (nom, code_barres, prix, stock, categorie) VALUES (?, ?, ?, ?, ?)',
-                    (nom, code, prix, stock, cat)
-                )
+                cursor.execute(insert_produit, (nom, code, prix, stock, cat))
             except:
                 pass
     
     conn.commit()
     conn.close()
 
+def adapt_query(query):
+    """Adapte les placeholders SQL selon la base de données (? → %s pour PostgreSQL)"""
+    if USE_POSTGRES:
+        return query.replace('?', '%s')
+    return query
+
+def row_to_dict(row):
+    """Convertit une ligne de résultat en dictionnaire (compatible PostgreSQL et SQLite)"""
+    if USE_POSTGRES:
+        return dict(row) if hasattr(row, 'keys') else {k: row[i] for i, k in enumerate(row.keys()) if hasattr(row, 'keys')}
+    else:
+        return dict(row)
+
 def get_categories():
-    """RÃ©cupÃ©rer toutes les catÃ©gories"""
+    """Récupérer toutes les catégories"""
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
+        if USE_POSTGRES:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+        else:
+            cursor = conn.cursor()
         cursor.execute('SELECT * FROM categories ORDER BY nom')
         categories = cursor.fetchall()
         conn.close()
@@ -111,10 +168,13 @@ def get_categories():
         return []
 
 def get_all_products():
-    """RÃ©cupÃ©rer tous les produits pour la gestion du stock"""
+    """Récupérer tous les produits pour la gestion du stock"""
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
+        if USE_POSTGRES:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+        else:
+            cursor = conn.cursor()
         cursor.execute('SELECT * FROM produits ORDER BY nom')
         produits = cursor.fetchall()
         conn.close()
