@@ -18,11 +18,16 @@ DATABASE_URL = os.environ.get('DATABASE_URL', '')
 USE_POSTGRES = DATABASE_URL.startswith('postgres')
 
 if USE_POSTGRES:
-    import psycopg2
-    from psycopg2.extras import RealDictCursor
-    # Fix pour Render (postgres:// → postgresql://)
-    if DATABASE_URL.startswith('postgres://'):
-        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+    try:
+        import psycopg2
+        from psycopg2.extras import RealDictCursor
+        # Fix pour Render (postgres:// → postgresql://)
+        if DATABASE_URL.startswith('postgres://'):
+            DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+    except ImportError:
+        # Si psycopg2 n'est pas disponible, utiliser SQLite
+        print("⚠️ psycopg2 non disponible, utilisation de SQLite")
+        USE_POSTGRES = False
 
 def get_db_connection():
     """Connexion universelle SQLite (local) ou PostgreSQL (production)"""
