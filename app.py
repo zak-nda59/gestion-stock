@@ -158,8 +158,10 @@ def adapt_query(query):
 def row_to_dict(row):
     """Convertit une ligne de résultat en dictionnaire (compatible PostgreSQL et SQLite)"""
     if USE_POSTGRES:
-        return dict(row) if hasattr(row, 'keys') else {k: row[i] for i, k in enumerate(row.keys()) if hasattr(row, 'keys')}
+        # Avec RealDictCursor, row est déjà un dict
+        return dict(row)
     else:
+        # SQLite avec row_factory = sqlite3.Row
         return dict(row)
 
 def get_categories():
@@ -1047,7 +1049,8 @@ def favicon():
 # Initialisation de la base de données au démarrage de l'application
 try:
     init_database()
-    print("✅ Base de données SQLite initialisée")
+    db_type = "PostgreSQL" if USE_POSTGRES else "SQLite"
+    print(f"✅ Base de données {db_type} initialisée")
     
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -1056,9 +1059,15 @@ try:
     conn.close()
     
     print(f"📦 {count} produits en base")
+    print(f"🗄️ Type de base: {db_type}")
+    if USE_POSTGRES:
+        print(f"🔗 Connexion PostgreSQL active")
     
 except Exception as e:
     print(f"⚠️ Initialisation base de données: {e}")
+    print(f"⚠️ Type erreur: {type(e).__name__}")
+    import traceback
+    traceback.print_exc()
     print("La base sera créée à la première requête")
 
 if __name__ == '__main__':
