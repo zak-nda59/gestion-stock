@@ -110,31 +110,36 @@ def init_database():
         placeholder = '?'
         insert_ignore = 'INSERT OR IGNORE INTO categories (emoji, nom, description) VALUES (?, ?, ?)'
     
-    # Catégories par défaut
-    categories_defaut = [
-        ('📱', 'Écran', 'Écrans et dalles tactiles'),
-        ('🔋', 'Batterie', 'Batteries et accumulateurs'),
-        ('🛡️', 'Coque', 'Coques et étuis de protection'),
-        ('🔍', 'Accessoire', 'Accessoires divers'),
-        ('🔌', 'Câble', 'Câbles et chargeurs'),
-        ('🔧', 'Outil', 'Outils de réparation'),
-        ('💾', 'Composant', 'Composants électroniques'),
-        ('🎧', 'Audio', 'Écouteurs et haut-parleurs'),
-        ('📦', 'Autre', 'Autres produits')
-    ]
+    # Catégories par défaut (UNIQUEMENT si aucune catégorie n'existe)
+    cursor.execute('SELECT COUNT(*) FROM categories')
+    result = cursor.fetchone()
+    count_categories = result[0]
     
-    for emoji, nom, desc in categories_defaut:
-        try:
-            cursor.execute(insert_ignore, (emoji, nom, desc))
-        except:
-            pass
+    if count_categories == 0:
+        categories_defaut = [
+            ('📱', 'Écran', 'Écrans et dalles tactiles'),
+            ('🔋', 'Batterie', 'Batteries et accumulateurs'),
+            ('🛡️', 'Coque', 'Coques et étuis de protection'),
+            ('🔍', 'Accessoire', 'Accessoires divers'),
+            ('🔌', 'Câble', 'Câbles et chargeurs'),
+            ('🔧', 'Outil', 'Outils de réparation'),
+            ('💾', 'Composant', 'Composants électroniques'),
+            ('🎧', 'Audio', 'Écouteurs et haut-parleurs'),
+            ('📦', 'Autre', 'Autres produits')
+        ]
+        
+        for emoji, nom, desc in categories_defaut:
+            try:
+                cursor.execute(insert_ignore, (emoji, nom, desc))
+            except:
+                pass
     
     # Produits d'exemple (seulement si aucun produit existe)
-    cursor.execute('SELECT COUNT(*) as count FROM produits')
+    cursor.execute('SELECT COUNT(*) FROM produits')
     result = cursor.fetchone()
-    count = result[0] if USE_POSTGRES else result[0]
+    count_produits = result[0]
     
-    if count == 0:
+    if count_produits == 0:
         produits_exemple = [
             ('Écran iPhone 12', '1234567890123', 45.99, 15, 'Écran'),
             ('Batterie Samsung S21', '2345678901234', 29.99, 8, 'Batterie'),
