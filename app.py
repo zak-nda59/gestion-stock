@@ -24,6 +24,11 @@ if USE_POSTGRES:
         # Fix pour Render (postgres:// → postgresql://)
         if DATABASE_URL.startswith('postgres://'):
             DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+        # Debug: afficher l'hostname utilisé
+        import re
+        hostname_match = re.search(r'@([^/]+)/', DATABASE_URL)
+        if hostname_match:
+            print(f"🔍 Tentative connexion PostgreSQL: {hostname_match.group(1)}")
     except ImportError:
         # Si psycopg2 n'est pas disponible, utiliser SQLite
         print("⚠️ psycopg2 non disponible, utilisation de SQLite")
