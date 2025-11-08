@@ -44,6 +44,13 @@ def get_db_connection():
         conn.row_factory = sqlite3.Row
         return conn
 
+def get_cursor(conn):
+    """Crée un cursor approprié selon le type de base de données"""
+    if USE_POSTGRES:
+        return conn.cursor(cursor_factory=RealDictCursor)
+    else:
+        return conn.cursor()
+
 def init_database():
     """Initialise la base de données (PostgreSQL ou SQLite)"""
     conn = get_db_connection()
@@ -158,11 +165,20 @@ def adapt_query(query):
 def row_to_dict(row):
     """Convertit une ligne de résultat en dictionnaire (compatible PostgreSQL et SQLite)"""
     if USE_POSTGRES:
-        # Avec RealDictCursor, row est déjà un dict
-        return dict(row)
+        # Avec RealDictCursor, row est déjà un dict, on le retourne tel quel
+        return row
     else:
         # SQLite avec row_factory = sqlite3.Row
         return dict(row)
+
+def rows_to_list(rows):
+    """Convertit une liste de rows en liste de dictionnaires"""
+    if USE_POSTGRES:
+        # Avec RealDictCursor, les rows sont déjà des dicts
+        return rows
+    else:
+        # SQLite avec row_factory = sqlite3.Row
+        return [dict(row) for row in rows]
 
 def get_categories():
     """Récupérer toutes les catégories"""
@@ -175,7 +191,7 @@ def get_categories():
         cursor.execute('SELECT * FROM categories ORDER BY nom')
         categories = cursor.fetchall()
         conn.close()
-        return [dict(cat) for cat in categories]
+        return rows_to_list(categories)
     except Exception as e:
         return []
 
@@ -190,7 +206,7 @@ def get_all_products():
         cursor.execute('SELECT * FROM produits ORDER BY nom')
         produits = cursor.fetchall()
         conn.close()
-        return [dict(p) for p in produits]
+        return rows_to_list(produits)
     except Exception as e:
         return []
 
@@ -199,7 +215,7 @@ def index():
     """Page d'accueil avec recherche et aperÃ§u produits"""
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = get_cursor(conn)
         
         # ParamÃ¨tres de recherche
         recherche = request.args.get('q', '').strip()
@@ -219,20 +235,23 @@ def index():
         
         query += ' ORDER BY nom LIMIT 12'
         
+        query = adapt_query(query)
         cursor.execute(query, params)
         produits = cursor.fetchall()
         
         # Stats rapides
         cursor.execute('SELECT COUNT(*) as total FROM produits')
-        total = cursor.fetchone()[0]
+        result = cursor.fetchone()
+        total = result['total'] if USE_POSTGRES else result[0]
         
         cursor.execute('SELECT COUNT(*) as ruptures FROM produits WHERE stock = 0')
-        ruptures = cursor.fetchone()[0]
+        result = cursor.fetchone()
+        ruptures = result['ruptures'] if USE_POSTGRES else result[0]
         
         conn.close()
         
         return render_template('index.html', 
-                             produits=[dict(p) for p in produits],
+                             produits=rows_to_list(produits),
                              categories=get_categories(),
                              recherche=recherche,
                              categorie_filtre=categorie,
