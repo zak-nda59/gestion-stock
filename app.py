@@ -266,7 +266,7 @@ def voir_produits():
     """Page complÃ¨te des produits avec filtres avancÃ©s"""
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = get_cursor(conn)
         
         # ParamÃ¨tres de filtrage
         recherche = request.args.get('q', '').strip()
@@ -317,18 +317,22 @@ def voir_produits():
         ordre_sql = 'DESC' if ordre == 'desc' else 'ASC'
         query += f' ORDER BY {colonne_tri} {ordre_sql}'
         
+        query = adapt_query(query)
         cursor.execute(query, params)
         produits = cursor.fetchall()
         
         # Statistiques
         cursor.execute('SELECT COUNT(*) as total FROM produits')
-        total = cursor.fetchone()[0]
+        result = cursor.fetchone()
+        total = result['total'] if USE_POSTGRES else result[0]
         
         cursor.execute('SELECT COUNT(*) as ruptures FROM produits WHERE stock = 0')
-        ruptures = cursor.fetchone()[0]
+        result = cursor.fetchone()
+        ruptures = result['ruptures'] if USE_POSTGRES else result[0]
         
         cursor.execute('SELECT COUNT(*) as stock_faible FROM produits WHERE stock > 0 AND stock <= 5')
-        stock_faible = cursor.fetchone()[0]
+        result = cursor.fetchone()
+        stock_faible = result['stock_faible'] if USE_POSTGRES else result[0]
         
         conn.close()
         
@@ -340,7 +344,7 @@ def voir_produits():
         }
         
         return render_template('produits.html', 
-                             produits=[dict(p) for p in produits],
+                             produits=rows_to_list(produits),
                              categories=get_categories(),
                              stats=stats,
                              filtres={
@@ -377,11 +381,9 @@ def ajouter_produit():
                 code_barres = str(int(datetime.now().timestamp() * 1000))[-13:]
             
             conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute(
-                'INSERT INTO produits (nom, code_barres, prix, stock, categorie) VALUES (?, ?, ?, ?, ?)',
-                (nom, code_barres, prix, stock, categorie)
-            )
+            cursor = get_cursor(conn)
+            query = adapt_query('INSERT INTO produits (nom, code_barres, prix, stock, categorie) VALUES (?, ?, ?, ?, ?)')
+            cursor.execute(query, (nom, code_barres, prix, stock, categorie))
             conn.commit()
             conn.close()
             
@@ -407,23 +409,21 @@ def modifier_produit(id):
             if not nom:
                 # RÃ©cupÃ©rer le produit pour rÃ©afficher le formulaire
                 conn = get_db_connection()
-                cursor = conn.cursor()
-                cursor.execute('SELECT * FROM produits WHERE id = ?', (id,))
+                cursor = get_cursor(conn)
+                query = adapt_query('SELECT * FROM produits WHERE id = ?')
+                cursor.execute(query, (id,))
                 produit = cursor.fetchone()
                 conn.close()
                 
                 return render_template('modifier.html', 
-                                     produit=dict(produit),
+                                     produit=row_to_dict(produit),
                                      categories=get_categories(),
                                      error="Le nom du produit est obligatoire")
             
             conn = get_db_connection()
-            cursor = conn.cursor()
-            # Mise Ã  jour complÃ¨te avec le stock
-            cursor.execute(
-                'UPDATE produits SET nom=?, prix=?, stock=?, categorie=? WHERE id=?',
-                (nom, prix, stock, categorie, id)
-            )
+            cursor = get_cursor(conn)
+            query = adapt_query('UPDATE produits SET nom=?, prix=?, stock=?, categorie=? WHERE id=?')
+            cursor.execute(query, (nom, prix, stock, categorie, id))
             conn.commit()
             conn.close()
             
@@ -432,21 +432,23 @@ def modifier_produit(id):
         except Exception as e:
             # RÃ©cupÃ©rer le produit pour rÃ©afficher le formulaire avec l'erreur
             conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute('SELECT * FROM produits WHERE id = ?', (id,))
+            cursor = get_cursor(conn)
+            query = adapt_query('SELECT * FROM produits WHERE id = ?')
+            cursor.execute(query, (id,))
             produit = cursor.fetchone()
             conn.close()
             
             return render_template('modifier.html', 
-                                 produit=dict(produit),
+                                 produit=row_to_dict(produit),
                                  categories=get_categories(),
                                  error=f"Erreur: {str(e)}")
     
     # GET - Afficher le formulaire
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM produits WHERE id = ?', (id,))
+        cursor = get_cursor(conn)
+        query = adapt_query('SELECT * FROM produits WHERE id = ?')
+        cursor.execute(query, (id,))
         produit = cursor.fetchone()
         conn.close()
         
@@ -454,7 +456,7 @@ def modifier_produit(id):
             return render_template('error.html', error="Produit non trouvÃ©")
         
         return render_template('modifier.html', 
-                             produit=dict(produit),
+                             produit=row_to_dict(produit),
                              categories=get_categories())
         
     except Exception as e:
@@ -465,8 +467,9 @@ def supprimer_produit(id):
     """Supprimer un produit"""
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('DELETE FROM produits WHERE id = ?', (id,))
+        cursor = get_cursor(conn)
+        query = adapt_query('DELETE FROM produits WHERE id = ?')
+        cursor.execute(query, (id,))
         conn.commit()
         conn.close()
     except Exception as e:
@@ -494,15 +497,16 @@ def afficher_code_barres(id):
     """Afficher le code-barres d'un produit"""
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM produits WHERE id = ?', (id,))
+        cursor = get_cursor(conn)
+        query = adapt_query('SELECT * FROM produits WHERE id = ?')
+        cursor.execute(query, (id,))
         produit = cursor.fetchone()
         conn.close()
         
         if not produit:
             return render_template('error.html', error="Produit non trouvé")
         
-        return render_template('code_barres_produit.html', produit=dict(produit))
+        return render_template('code_barres_produit.html', produit=row_to_dict(produit))
     except Exception as e:
         return render_template('error.html', error=str(e))
 
@@ -513,10 +517,11 @@ def imprimer_codes_barres():
         categorie = request.args.get('categorie', '')
         
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = get_cursor(conn)
         
         if categorie:
-            cursor.execute('SELECT * FROM produits WHERE categorie = ? ORDER BY nom', (categorie,))
+            query = adapt_query('SELECT * FROM produits WHERE categorie = ? ORDER BY nom')
+            cursor.execute(query, (categorie,))
         else:
             cursor.execute('SELECT * FROM produits ORDER BY categorie, nom')
         
@@ -527,7 +532,7 @@ def imprimer_codes_barres():
         date_aujourd_hui = datetime.now().strftime('%d/%m/%Y %H:%M')
         
         return render_template('imprimer_codes_barres.html', 
-                             produits=[dict(p) for p in produits],
+                             produits=rows_to_list(produits),
                              categories=get_categories(),
                              date=date_aujourd_hui)
     except Exception as e:
@@ -548,15 +553,16 @@ def ajuster_stock():
         quantite = int(data.get('quantite', 1))
         
         conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM produits WHERE id = ?', (produit_id,))
+        cursor = get_cursor(conn)
+        query = adapt_query('SELECT * FROM produits WHERE id = ?')
+        cursor.execute(query, (produit_id,))
         produit = cursor.fetchone()
         
         if not produit:
             conn.close()
             return jsonify({'success': False, 'message': 'Produit non trouvÃ©'})
         
-        produit_dict = dict(produit)
+        produit_dict = row_to_dict(produit)
         stock_actuel = produit_dict['stock']
         
         if action == 'ajouter':
@@ -575,15 +581,16 @@ def ajuster_stock():
             conn.close()
             return jsonify({'success': False, 'message': 'Action non valide'})
         
-        # Mise Ã  jour du stock
-        cursor.execute('UPDATE produits SET stock = ? WHERE id = ?', (nouveau_stock, produit_id))
+        # Mise Ã  jour du stock
+        query = adapt_query('UPDATE produits SET stock = ? WHERE id = ?')
+        cursor.execute(query, (nouveau_stock, produit_id))
         conn.commit()
         conn.close()
         
         action_text = {
-            'ajouter': f'ajoutÃ© {quantite}',
-            'retirer': f'retirÃ© {quantite}',
-            'definir': f'dÃ©fini Ã  {quantite}'
+            'ajouter': f'ajouté {quantite}',
+            'retirer': f'retiré {quantite}',
+            'definir': f'défini à {quantite}'
         }[action]
         
         return jsonify({
@@ -612,15 +619,16 @@ def scan():
             return jsonify({'success': False, 'message': 'Code vide'})
         
         conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM produits WHERE code_barres = ?', (code,))
+        cursor = get_cursor(conn)
+        query = adapt_query('SELECT * FROM produits WHERE code_barres = ?')
+        cursor.execute(query, (code,))
         produit = cursor.fetchone()
         
         if not produit:
             conn.close()
             return jsonify({'success': False, 'message': f'Produit non trouvÃ©: {code}'})
         
-        produit_dict = dict(produit)
+        produit_dict = row_to_dict(produit)
         
         # Si aucune action spÃ©cifiÃ©e, retourner les infos du produit pour demander l'action
         if not action:
@@ -660,8 +668,9 @@ def scan():
             conn.close()
             return jsonify({'success': False, 'message': 'Action non valide'})
         
-        # Mise Ã  jour du stock
-        cursor.execute('UPDATE produits SET stock = ? WHERE id = ?', (nouveau_stock, produit_dict['id']))
+        # Mise Ã  jour du stock
+        query = adapt_query('UPDATE produits SET stock = ? WHERE id = ?')
+        cursor.execute(query, (nouveau_stock, produit_dict['id']))
         conn.commit()
         conn.close()
         
@@ -683,21 +692,24 @@ def statistiques():
     """Page statistiques"""
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = get_cursor(conn)
         
         # Stats gÃ©nÃ©rales
         cursor.execute('SELECT COUNT(*) as total FROM produits')
-        total = cursor.fetchone()[0]
+        result = cursor.fetchone()
+        total = result['total'] if USE_POSTGRES else result[0]
         
         cursor.execute('SELECT COUNT(*) as ruptures FROM produits WHERE stock = 0')
-        ruptures = cursor.fetchone()[0]
+        result = cursor.fetchone()
+        ruptures = result['ruptures'] if USE_POSTGRES else result[0]
         
         cursor.execute('SELECT COUNT(*) as stock_faible FROM produits WHERE stock > 0 AND stock <= 5')
-        stock_faible = cursor.fetchone()[0]
+        result = cursor.fetchone()
+        stock_faible = result['stock_faible'] if USE_POSTGRES else result[0]
         
         cursor.execute('SELECT SUM(stock * prix) as valeur FROM produits')
         result = cursor.fetchone()
-        valeur_stock = result[0] or 0
+        valeur_stock = (result['valeur'] if USE_POSTGRES else result[0]) or 0
         
         # Top catÃ©gories
         cursor.execute('''
@@ -716,7 +728,7 @@ def statistiques():
             'ruptures': ruptures,
             'stock_faible': stock_faible,
             'valeur_stock': round(valeur_stock, 2),
-            'top_categories': [dict(cat) for cat in top_categories]
+            'top_categories': rows_to_list(top_categories)
         }
         
         return render_template('statistiques.html', stats=stats, categories=get_categories())
@@ -729,13 +741,13 @@ def ruptures():
     """Produits en rupture"""
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = get_cursor(conn)
         cursor.execute('SELECT * FROM produits WHERE stock = 0 ORDER BY nom')
         produits = cursor.fetchall()
         conn.close()
         
         return render_template('ruptures.html', 
-                             produits=[dict(p) for p in produits],
+                             produits=rows_to_list(produits),
                              categories=get_categories())
         
     except Exception as e:
@@ -743,16 +755,16 @@ def ruptures():
 
 @app.route('/stock-faible')
 def stock_faible():
-    """Produits Ã  stock faible"""
+    """Produits Ã  stock faible"""
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = get_cursor(conn)
         cursor.execute('SELECT * FROM produits WHERE stock > 0 AND stock <= 5 ORDER BY stock ASC')
         produits = cursor.fetchall()
         conn.close()
         
         return render_template('stock_faible.html', 
-                             produits=[dict(p) for p in produits],
+                             produits=rows_to_list(produits),
                              categories=get_categories())
         
     except Exception as e:
@@ -763,13 +775,13 @@ def codes_barres():
     """GÃ©nÃ©rateur de codes-barres"""
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = get_cursor(conn)
         cursor.execute('SELECT * FROM produits ORDER BY nom')
         produits = cursor.fetchall()
         conn.close()
         
         return render_template('codes_barres.html', 
-                             produits=[dict(p) for p in produits],
+                             produits=rows_to_list(produits),
                              categories=get_categories())
         
     except Exception as e:
@@ -780,15 +792,16 @@ def generer_code_barres(produit_id):
     """GÃ©nÃ¨re et retourne l'image du code-barres (version simplifiÃ©e)"""
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM produits WHERE id = ?', (produit_id,))
+        cursor = get_cursor(conn)
+        query = adapt_query('SELECT * FROM produits WHERE id = ?')
+        cursor.execute(query, (produit_id,))
         produit = cursor.fetchone()
         conn.close()
         
         if not produit:
             return "Produit non trouvÃ©", 404
         
-        produit_dict = dict(produit)
+        produit_dict = row_to_dict(produit)
         
         # GÃ©nÃ©rer une image SVG simple du code-barres
         code = produit_dict['code_barres']
@@ -919,7 +932,7 @@ def api_produits():
     """API JSON des produits"""
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = get_cursor(conn)
         cursor.execute('SELECT * FROM produits ORDER BY nom')
         produits = cursor.fetchall()
         conn.close()
@@ -927,7 +940,7 @@ def api_produits():
         return jsonify({
             'success': True,
             'count': len(produits),
-            'produits': [dict(p) for p in produits]
+            'produits': rows_to_list(produits)
         })
         
     except Exception as e:
@@ -938,15 +951,16 @@ def api_produit_by_barcode(code_barres):
     """API pour rechercher un produit par code-barres"""
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM produits WHERE code_barres = ?', (code_barres,))
+        cursor = get_cursor(conn)
+        query = adapt_query('SELECT * FROM produits WHERE code_barres = ?')
+        cursor.execute(query, (code_barres,))
         produit = cursor.fetchone()
         conn.close()
         
         if produit:
             return jsonify({
                 'success': True,
-                'produit': dict(produit)
+                'produit': row_to_dict(produit)
             })
         else:
             return jsonify({
@@ -962,21 +976,24 @@ def api_stats():
     """API JSON des statistiques"""
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = get_cursor(conn)
         
         # Stats gÃ©nÃ©rales
         cursor.execute('SELECT COUNT(*) as total FROM produits')
-        total = cursor.fetchone()[0]
+        result = cursor.fetchone()
+        total = result['total'] if USE_POSTGRES else result[0]
         
         cursor.execute('SELECT COUNT(*) as ruptures FROM produits WHERE stock = 0')
-        ruptures = cursor.fetchone()[0]
+        result = cursor.fetchone()
+        ruptures = result['ruptures'] if USE_POSTGRES else result[0]
         
         cursor.execute('SELECT COUNT(*) as stock_faible FROM produits WHERE stock > 0 AND stock <= 5')
-        stock_faible = cursor.fetchone()[0]
+        result = cursor.fetchone()
+        stock_faible = result['stock_faible'] if USE_POSTGRES else result[0]
         
         cursor.execute('SELECT SUM(stock * prix) as valeur FROM produits')
         result = cursor.fetchone()
-        valeur_stock = result[0] or 0
+        valeur_stock = (result['valeur'] if USE_POSTGRES else result[0]) or 0
         
         # Top catÃ©gories
         cursor.execute('''
@@ -997,7 +1014,7 @@ def api_stats():
                 'ruptures': ruptures,
                 'stock_faible': stock_faible,
                 'valeur_stock': round(valeur_stock, 2),
-                'top_categories': [dict(cat) for cat in top_categories]
+                'top_categories': rows_to_list(top_categories)
             }
         })
         
@@ -1024,11 +1041,9 @@ def gerer_categories():
                                      error="Le nom de la catÃ©gorie est obligatoire")
             
             conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute(
-                'INSERT INTO categories (nom, emoji, description) VALUES (?, ?, ?)',
-                (nom, emoji, description)
-            )
+            cursor = get_cursor(conn)
+            query = adapt_query('INSERT INTO categories (nom, emoji, description) VALUES (?, ?, ?)')
+            cursor.execute(query, (nom, emoji, description))
             conn.commit()
             conn.close()
             
@@ -1046,8 +1061,9 @@ def supprimer_categorie(id):
     """Supprimer une catÃ©gorie"""
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('DELETE FROM categories WHERE id = ?', (id,))
+        cursor = get_cursor(conn)
+        query = adapt_query('DELETE FROM categories WHERE id = ?')
+        cursor.execute(query, (id,))
         conn.commit()
         conn.close()
     except Exception as e:
