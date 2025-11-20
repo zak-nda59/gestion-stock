@@ -1,22 +1,56 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liste des Produits</title>
+    <title>Products List</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        body { background: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
-        .navbar { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .container-main { max-width: 1400px; margin: 30px auto; padding: 0 20px; }
-        .table-card { background: white; border-radius: 8px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        .search-box { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
-        .filter-box { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
-        .category-btn { 
-            padding: 10px 20px; 
-            border: 2px solid #e9ecef; 
-            border-radius: 8px; 
+        body {
+            background: #f4f6f9;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .container-main {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .table-card {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .search-box {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+        }
+
+        .filter-box {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+        }
+
+        .category-btn {
+            padding: 10px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
             background: white;
             transition: all 0.2s;
             cursor: pointer;
@@ -25,52 +59,56 @@
             display: inline-block;
             margin: 5px;
         }
-        .category-btn:hover { 
-            border-color: #0d6efd; 
+
+        .category-btn:hover {
+            border-color: #0d6efd;
             background: #e7f1ff;
             color: #0d6efd;
             transform: translateY(-2px);
         }
-        .category-btn.active { 
-            background: #0d6efd; 
-            color: white; 
+
+        .category-btn.active {
+            background: #0d6efd;
+            color: white;
             border-color: #0d6efd;
         }
-        .badge-count { 
-            background: #6c757d; 
-            color: white; 
-            padding: 2px 8px; 
-            border-radius: 10px; 
+
+        .badge-count {
+            background: #6c757d;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
             font-size: 0.75rem;
             margin-left: 5px;
         }
     </style>
 </head>
+
 <body>
     <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container-fluid px-4">
-            <a class="navbar-brand fw-bold" href="/"><i class="bi bi-box-seam me-2"></i>Inventaire</a>
+            <a class="navbar-brand fw-bold" href="/"><i class="bi bi-box-seam me-2"></i>Smart Inventory</a>
             <div class="navbar-nav ms-auto d-flex flex-row gap-3">
-                <a class="nav-link" href="/"><i class="bi bi-house"></i> Accueil</a>
-                <a class="nav-link active" href="/produits"><i class="bi bi-list-ul"></i> Produits</a>
-                <a class="nav-link" href="/ajouter"><i class="bi bi-plus-circle"></i> Ajouter</a>
-                <a class="nav-link" href="/scanner"><i class="bi bi-upc-scan"></i> Scanner</a>
+                <a class="nav-link" href="/"><i class="bi bi-house"></i> Home</a>
+                <a class="nav-link active" href="/produits"><i class="bi bi-list-ul"></i> Products</a>
+                <a class="nav-link" href="/ajouter"><i class="bi bi-plus-circle"></i> Add Product</a>
+                <a class="nav-link" href="/scanner"><i class="bi bi-upc-scan"></i> Scan</a>
             </div>
         </div>
     </nav>
 
     <div class="container-main">
-        <!-- Filtres par catégorie -->
+        <!-- Category filters -->
         <div class="filter-box">
-            <h6 class="mb-3"><i class="bi bi-funnel me-2"></i>Filtrer par Catégorie</h6>
+            <h6 class="mb-3"><i class="bi bi-funnel me-2"></i>Filter by Category</h6>
             <div class="d-flex flex-wrap gap-2">
                 <a href="/produits" class="category-btn {% if not filtres.categorie %}active{% endif %}">
-                    <i class="bi bi-grid-3x3"></i> Tous les Produits
+                    <i class="bi bi-grid-3x3"></i> All Products
                     <span class="badge-count">{{ stats.total }}</span>
                 </a>
                 {% for cat in categories %}
-                <a href="/produits?categorie={{ cat.nom }}" 
-                   class="category-btn {% if filtres.categorie == cat.nom %}active{% endif %}">
+                <a href="/produits?categorie={{ cat.nom }}"
+                    class="category-btn {% if filtres.categorie == cat.nom %}active{% endif %}">
                     {{ cat.emoji }} {{ cat.nom }}
                     <span class="badge-count" id="count-{{ cat.nom }}">...</span>
                 </a>
@@ -78,56 +116,57 @@
             </div>
         </div>
 
-        <!-- Barre de recherche -->
+        <!-- Search bar -->
         <div class="search-box">
             <form method="GET" class="row align-items-end">
                 <div class="col-md-6 mb-2">
-                    <label class="form-label fw-semibold">Rechercher</label>
-                    <input type="text" name="recherche" class="form-control" 
-                           placeholder="Nom ou code-barres..." value="{{ filtres.recherche or '' }}">
+                    <label class="form-label fw-semibold">Search</label>
+                    <input type="text" name="recherche" class="form-control" placeholder="Name or barcode..."
+                        value="{{ filtres.recherche or '' }}">
                 </div>
                 <div class="col-md-3 mb-2">
-                    <label class="form-label fw-semibold">État du Stock</label>
+                    <label class="form-label fw-semibold">Stock Status</label>
                     <select name="stock_filter" class="form-select">
-                        <option value="">Tous</option>
-                        <option value="rupture" {% if filtres.stock_filter == 'rupture' %}selected{% endif %}>En rupture</option>
-                        <option value="faible" {% if filtres.stock_filter == 'faible' %}selected{% endif %}>Stock faible</option>
-                        <option value="ok" {% if filtres.stock_filter == 'ok' %}selected{% endif %}>Stock OK</option>
+                        <option value="">All</option>
+                        <option value="rupture" {% if filtres.stock_filter=='rupture' %}selected{% endif %}>Out of stock
+                        </option>
+                        <option value="faible" {% if filtres.stock_filter=='faible' %}selected{% endif %}>Low stock
+                        </option>
+                        <option value="ok" {% if filtres.stock_filter=='ok' %}selected{% endif %}>In stock</option>
                     </select>
                 </div>
                 <div class="col-md-3 mb-2">
                     <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-search me-2"></i>Rechercher
+                        <i class="bi bi-search me-2"></i>Search
                     </button>
                 </div>
                 {% if filtres.recherche or filtres.categorie or filtres.stock_filter %}
                 <div class="col-12 mt-2">
                     <a href="/produits" class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-x-circle me-1"></i>Réinitialiser les filtres
+                        <i class="bi bi-x-circle me-1"></i>Reset filters
                     </a>
                 </div>
                 {% endif %}
             </form>
         </div>
 
-        <!-- Résultats -->
+        <!-- Results -->
         <div class="table-card">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5>
                     <i class="bi bi-list-ul me-2"></i>
                     {% if filtres.categorie %}
-                        {{ filtres.categorie }}
+                    {{ filtres.categorie }}
                     {% else %}
-                        Tous les Produits
+                    All Products
                     {% endif %}
                 </h5>
                 <div class="d-flex align-items-center gap-2">
-                    <a href="/imprimer-codes-barres{% if filtres.categorie %}?categorie={{ filtres.categorie }}{% endif %}" 
-                       class="btn btn-sm btn-outline-primary" 
-                       target="_blank">
-                        <i class="bi bi-printer me-1"></i>Imprimer Codes-barres
+                    <a href="/imprimer-codes-barres{% if filtres.categorie %}?categorie={{ filtres.categorie }}{% endif %}"
+                        class="btn btn-sm btn-outline-primary" target="_blank">
+                        <i class="bi bi-printer me-1"></i>Print Barcodes
                     </a>
-                    <span class="badge bg-primary fs-6">{{ stats.resultats }} produit(s)</span>
+                    <span class="badge bg-primary fs-6">{{ stats.resultats }} product(s)</span>
                 </div>
             </div>
 
@@ -136,11 +175,11 @@
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>Produit</th>
-                            <th>Code-barres</th>
-                            <th>Prix</th>
+                            <th>Product</th>
+                            <th>Barcode</th>
+                            <th>Price</th>
                             <th>Stock</th>
-                            <th>Catégorie</th>
+                            <th>Category</th>
                             <th class="text-end">Actions</th>
                         </tr>
                     </thead>
@@ -149,15 +188,17 @@
                         <tr>
                             <td class="fw-semibold">{{ produit.nom }}</td>
                             <td><code>{{ produit.code_barres }}</code></td>
-                            <td><strong>{{ "%.2f"|format(produit.prix) }}€</strong></td>
+                            <td><strong>${{ "%.2f"|format(produit.prix) }}</strong></td>
                             <td>
-                                <span class="badge {% if produit.stock == 0 %}bg-danger{% elif produit.stock <= 5 %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                                <span
+                                    class="badge {% if produit.stock == 0 %}bg-danger{% elif produit.stock <= 5 %}bg-warning text-dark{% else %}bg-success{% endif %}">
                                     {{ produit.stock }}
                                 </span>
                             </td>
                             <td><small class="text-muted">{{ produit.categorie }}</small></td>
                             <td class="text-end">
-                                <a href="/code-barres/{{ produit.id }}" class="btn btn-sm btn-outline-secondary me-1" target="_blank" title="Afficher le code-barres">
+                                <a href="/code-barres/{{ produit.id }}" class="btn btn-sm btn-outline-secondary me-1"
+                                    target="_blank" title="Show barcode">
                                     <i class="bi bi-upc-scan"></i>
                                 </a>
                                 <a href="/modifier/{{ produit.id }}" class="btn btn-sm btn-outline-primary">
@@ -172,7 +213,7 @@
             {% else %}
             <div class="alert alert-info">
                 <i class="bi bi-info-circle me-2"></i>
-                <strong>Aucun produit trouvé</strong> avec ces critères
+                <strong>No products found</strong> with these filters
             </div>
             {% endif %}
         </div>
@@ -185,13 +226,13 @@
             try {
                 const response = await fetch('/api/produits');
                 const data = await response.json();
-                
+
                 if (data.produits) {
                     const counts = {};
                     data.produits.forEach(p => {
                         counts[p.categorie] = (counts[p.categorie] || 0) + 1;
                     });
-                    
+
                     // Mettre à jour les badges
                     Object.keys(counts).forEach(cat => {
                         const badge = document.getElementById('count-' + cat);
@@ -202,8 +243,9 @@
                 console.error('Erreur chargement compteurs:', error);
             }
         }
-        
+
         loadCategoryCounts();
     </script>
 </body>
+
 </html>

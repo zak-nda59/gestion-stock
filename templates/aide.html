@@ -1,21 +1,24 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>❓ Aide - Boutique Mobile</title>
+    <title>❓ Help - Smart Inventory & Barcode Scanner</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        * { font-family: 'Poppins', sans-serif; }
-        
-        body { 
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px 0;
         }
-        
+
         .help-card {
             background: white;
             border-radius: 20px;
@@ -23,17 +26,17 @@
             margin-bottom: 25px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         }
-        
+
         .help-section {
             margin-bottom: 30px;
         }
-        
+
         .help-title {
             color: #667eea;
             font-weight: 700;
             margin-bottom: 15px;
         }
-        
+
         .step {
             background: #f8f9fa;
             border-radius: 10px;
@@ -43,149 +46,151 @@
         }
     </style>
 </head>
+
 <body>
     <nav class="navbar navbar-expand-lg" style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);">
         <div class="container">
-            <span class="navbar-brand text-white fw-bold">❓ Guide d'utilisation</span>
+            <span class="navbar-brand text-white fw-bold">❓ User Guide</span>
             <a href="/" class="btn btn-light btn-sm">
-                <i class="bi bi-arrow-left me-1"></i>Retour
+                <i class="bi bi-arrow-left me-1"></i>Back
             </a>
         </div>
     </nav>
 
     <div class="container mt-4">
         <div class="help-card">
-            <h2 class="text-center mb-4">📱 Guide Boutique Mobile</h2>
-            
+            <h2 class="text-center mb-4">📱 Smart Inventory & Barcode Scanner Guide</h2>
+
             <div class="help-section">
-                <h4 class="help-title">🏠 Page d'Accueil</h4>
+                <h4 class="help-title">🏠 Home Page</h4>
                 <div class="step">
-                    <strong>Recherche rapide :</strong> Tapez le nom d'un produit ou scannez un code-barres
+                    <strong>Quick search:</strong> Type a product name or scan a barcode
                 </div>
                 <div class="step">
-                    <strong>Actions rapides :</strong> Cliquez sur les gros boutons pour naviguer
+                    <strong>Quick actions:</strong> Use the large buttons to navigate faster
                 </div>
                 <div class="step">
-                    <strong>Statistiques :</strong> Voyez le nombre total de produits et les ruptures
+                    <strong>Statistics:</strong> See total products and out-of-stock alerts
                 </div>
             </div>
 
             <div class="help-section">
-                <h4 class="help-title">➕ Ajouter un Produit</h4>
+                <h4 class="help-title">➕ Add a Product</h4>
                 <div class="step">
-                    <strong>1.</strong> Remplissez le nom du produit (obligatoire)
+                    <strong>1.</strong> Fill in the product name (required)
                 </div>
                 <div class="step">
-                    <strong>2.</strong> Choisissez une catégorie dans la liste
+                    <strong>2.</strong> Choose a category from the list
                 </div>
                 <div class="step">
-                    <strong>3.</strong> Indiquez le prix et le stock initial
+                    <strong>3.</strong> Set the price and initial stock
                 </div>
                 <div class="step">
-                    <strong>4.</strong> Le code-barres est généré automatiquement ou saisissez le vôtre
+                    <strong>4.</strong> The barcode is generated automatically or you can enter your own
                 </div>
             </div>
 
             <div class="help-section">
                 <h4 class="help-title">📱 Scanner</h4>
                 <div class="step">
-                    <strong>Douchette :</strong> Connectez votre douchette USB/Bluetooth et scannez
+                    <strong>Barcode reader:</strong> Connect your USB/Bluetooth scanner and scan
                 </div>
                 <div class="step">
-                    <strong>Caméra :</strong> Cliquez "Démarrer" et pointez vers le code-barres
+                    <strong>Camera:</strong> Click "Start" and point to the barcode
                 </div>
                 <div class="step">
-                    <strong>Manuel :</strong> Tapez le code-barres dans le champ et appuyez Entrée
+                    <strong>Manual:</strong> Type the barcode in the field and press Enter
                 </div>
                 <div class="step">
-                    <strong>Action :</strong> Chaque scan retire automatiquement 1 du stock
-                </div>
-            </div>
-
-            <div class="help-section">
-                <h4 class="help-title">🔍 Filtres et Tris</h4>
-                <div class="step">
-                    <strong>Recherche :</strong> Cherchez par nom ou code-barres
-                </div>
-                <div class="step">
-                    <strong>Catégorie :</strong> Filtrez par type de produit
-                </div>
-                <div class="step">
-                    <strong>Stock :</strong> Affichez seulement les ruptures ou stock faible
-                </div>
-                <div class="step">
-                    <strong>Prix :</strong> Définissez une fourchette de prix min/max
-                </div>
-                <div class="step">
-                    <strong>Tris rapides :</strong> Utilisez les boutons pour trier instantanément
+                    <strong>Action:</strong> Each scan can remove or add units to the stock
                 </div>
             </div>
 
             <div class="help-section">
-                <h4 class="help-title">📊 Statistiques</h4>
+                <h4 class="help-title">🔍 Filters and Sorting</h4>
                 <div class="step">
-                    <strong>Dashboard :</strong> Voyez vos métriques principales
+                    <strong>Search:</strong> Search by name or barcode
                 </div>
                 <div class="step">
-                    <strong>Graphiques :</strong> Répartition par catégories
+                    <strong>Category:</strong> Filter by product type
                 </div>
                 <div class="step">
-                    <strong>Valeur stock :</strong> Valeur totale de votre inventaire
+                    <strong>Stock:</strong> Show only out-of-stock or low-stock products
                 </div>
                 <div class="step">
-                    <strong>Top catégories :</strong> Vos catégories les plus importantes
+                    <strong>Price:</strong> Set a min/max price range
+                </div>
+                <div class="step">
+                    <strong>Quick sorting:</strong> Use quick sort buttons to change order instantly
                 </div>
             </div>
 
             <div class="help-section">
-                <h4 class="help-title">🏷️ Codes-barres</h4>
+                <h4 class="help-title">📊 Statistics</h4>
                 <div class="step">
-                    <strong>Génération :</strong> Codes-barres visuels pour tous vos produits
+                    <strong>Dashboard:</strong> View your main inventory metrics
                 </div>
                 <div class="step">
-                    <strong>Impression :</strong> Cliquez "Imprimer" pour créer des étiquettes
+                    <strong>Charts:</strong> Category distribution and stock breakdown
                 </div>
                 <div class="step">
-                    <strong>Téléchargement :</strong> Sauvegardez les images sur votre appareil
+                    <strong>Stock value:</strong> Total value of your inventory
+                </div>
+                <div class="step">
+                    <strong>Top categories:</strong> Your most important categories
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h4 class="help-title">🏷️ Barcodes</h4>
+                <div class="step">
+                    <strong>Generation:</strong> Visual barcodes for all your products
+                </div>
+                <div class="step">
+                    <strong>Print:</strong> Click "Print" to create labels
+                </div>
+                <div class="step">
+                    <strong>Download:</strong> Save the barcode images on your device
                 </div>
             </div>
 
             <div class="help-section">
                 <h4 class="help-title">💾 Export</h4>
                 <div class="step">
-                    <strong>CSV :</strong> Exportez tous vos produits en fichier Excel/CSV
+                    <strong>CSV:</strong> Export all your products to an Excel/CSV file
                 </div>
                 <div class="step">
-                    <strong>Sauvegarde :</strong> Gardez une copie de votre inventaire
+                    <strong>Backup:</strong> Keep a backup copy of your inventory
                 </div>
                 <div class="step">
-                    <strong>Analyse :</strong> Ouvrez le fichier dans Excel pour plus d'analyses
+                    <strong>Analysis:</strong> Open the file in Excel for deeper analysis
                 </div>
             </div>
 
             <div class="help-section">
-                <h4 class="help-title">🚨 Alertes</h4>
+                <h4 class="help-title">🚨 Alerts</h4>
                 <div class="step">
-                    <strong>Ruptures :</strong> Produits à 0 en stock - réapprovisionnement urgent
+                    <strong>Out of stock:</strong> Products with 0 stock - urgent restock needed
                 </div>
                 <div class="step">
-                    <strong>Stock faible :</strong> Produits avec 1-5 unités - surveillez-les
+                    <strong>Low stock:</strong> Products with 1-5 units - monitor them
                 </div>
                 <div class="step">
-                    <strong>Notifications :</strong> Badges colorés sur l'interface
+                    <strong>Notifications:</strong> Colored badges on the interface
                 </div>
             </div>
 
             <div class="alert alert-info mt-4">
-                <h6><i class="bi bi-lightbulb me-2"></i>Conseils d'utilisation</h6>
+                <h6><i class="bi bi-lightbulb me-2"></i>Usage tips</h6>
                 <ul class="mb-0">
-                    <li><strong>Sauvegarde :</strong> Vos données sont automatiquement sauvegardées</li>
-                    <li><strong>Mobile :</strong> L'application fonctionne parfaitement sur téléphone</li>
-                    <li><strong>Raccourcis :</strong> Utilisez les boutons de tri rapide pour gagner du temps</li>
-                    <li><strong>Scanner :</strong> Autorisez l'accès caméra pour utiliser le scanner intégré</li>
+                    <li><strong>Backup:</strong> Your data is saved in the database (make regular backups)</li>
+                    <li><strong>Mobile:</strong> The app works perfectly on phones and tablets</li>
+                    <li><strong>Shortcuts:</strong> Use quick sort buttons to save time</li>
+                    <li><strong>Scanner:</strong> Allow camera access to use the built-in scanner</li>
                 </ul>
             </div>
         </div>
     </div>
 </body>
+
 </html>

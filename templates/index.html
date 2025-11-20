@@ -1,41 +1,48 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion Inventaire</title>
+    <title>Smart Inventory & Barcode Scanner</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        body { 
+        body {
             background: #f4f6f9;
             font-family: 'Segoe UI', sans-serif;
         }
+
         .navbar {
             background: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+
         .container-main {
             max-width: 1200px;
             margin: 30px auto;
             padding: 0 20px;
         }
+
         .card-stat {
             background: white;
             border-radius: 8px;
             padding: 25px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             text-align: center;
             transition: transform 0.2s;
         }
+
         .card-stat:hover {
             transform: translateY(-2px);
         }
+
         .stat-number {
             font-size: 2.5rem;
             font-weight: 700;
             margin: 10px 0;
         }
+
         .action-card {
             background: white;
             border-radius: 8px;
@@ -43,30 +50,35 @@
             text-align: center;
             text-decoration: none;
             color: #333;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             transition: all 0.2s;
             display: block;
         }
+
         .action-card:hover {
             transform: translateY(-3px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             color: #333;
         }
+
         .action-icon {
             font-size: 3rem;
             margin-bottom: 15px;
         }
+
         .action-title {
             font-size: 1.2rem;
             font-weight: 600;
             margin-bottom: 8px;
         }
+
         .table-card {
             background: white;
             border-radius: 8px;
             padding: 25px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
+
         .badge-stock {
             padding: 6px 12px;
             border-radius: 20px;
@@ -74,12 +86,13 @@
         }
     </style>
 </head>
+
 <body>
-    <!-- Menu de navigation -->
+    <!-- Navigation menu -->
     <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container-fluid px-4">
             <a class="navbar-brand fw-bold" href="/">
-                <i class="bi bi-box-seam me-2"></i>Inventaire
+                <i class="bi bi-box-seam me-2"></i>Smart Inventory
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -88,22 +101,22 @@
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
                         <a class="nav-link active" href="/">
-                            <i class="bi bi-house"></i> Accueil
+                            <i class="bi bi-house"></i> Home
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/produits">
-                            <i class="bi bi-list-ul"></i> Produits
+                            <i class="bi bi-list-ul"></i> Products
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/ajouter">
-                            <i class="bi bi-plus-circle"></i> Ajouter
+                            <i class="bi bi-plus-circle"></i> Add Product
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/scanner">
-                            <i class="bi bi-upc-scan"></i> Scanner
+                            <i class="bi bi-upc-scan"></i> Scan
                         </a>
                     </li>
                 </ul>
@@ -112,41 +125,41 @@
     </nav>
 
     <div class="container-main">
-        <!-- Statistiques principales -->
+        <!-- Main statistics -->
         <div class="row mb-4">
             <div class="col-md-4 mb-3">
                 <div class="card-stat">
                     <i class="bi bi-box text-primary" style="font-size: 2rem;"></i>
                     <div class="stat-number text-primary">{{ total or 0 }}</div>
-                    <div class="text-muted">Produits au total</div>
+                    <div class="text-muted">Total products</div>
                 </div>
             </div>
             <div class="col-md-4 mb-3">
                 <div class="card-stat">
                     <i class="bi bi-exclamation-triangle text-danger" style="font-size: 2rem;"></i>
                     <div class="stat-number text-danger">{{ ruptures or 0 }}</div>
-                    <div class="text-muted">En rupture</div>
+                    <div class="text-muted">Out of stock</div>
                 </div>
             </div>
             <div class="col-md-4 mb-3">
                 <div class="card-stat">
                     <i class="bi bi-folder text-success" style="font-size: 2rem;"></i>
                     <div class="stat-number text-success">{{ categories|length or 0 }}</div>
-                    <div class="text-muted">Catégories</div>
+                    <div class="text-muted">Categories</div>
                 </div>
             </div>
         </div>
 
-        <!-- Actions rapides -->
-        <h5 class="mb-3 fw-bold">Actions Rapides</h5>
+        <!-- Quick actions -->
+        <h5 class="mb-3 fw-bold">Quick Actions</h5>
         <div class="row mb-4">
             <div class="col-md-3 col-sm-6 mb-3">
                 <a href="/ajouter" class="action-card">
                     <div class="action-icon text-success">
                         <i class="bi bi-plus-circle-fill"></i>
                     </div>
-                    <div class="action-title">Ajouter Produit</div>
-                    <small class="text-muted">Nouveau produit</small>
+                    <div class="action-title">Add Product</div>
+                    <small class="text-muted">Create a new item</small>
                 </a>
             </div>
             <div class="col-md-3 col-sm-6 mb-3">
@@ -154,8 +167,8 @@
                     <div class="action-icon text-warning">
                         <i class="bi bi-folder-plus"></i>
                     </div>
-                    <div class="action-title">Créer Catégorie</div>
-                    <small class="text-muted">Organiser produits</small>
+                    <div class="action-title">Create Category</div>
+                    <small class="text-muted">Organize products</small>
                 </a>
             </div>
             <div class="col-md-3 col-sm-6 mb-3">
@@ -163,8 +176,8 @@
                     <div class="action-icon text-primary">
                         <i class="bi bi-upc-scan"></i>
                     </div>
-                    <div class="action-title">Scanner</div>
-                    <small class="text-muted">Code-barres</small>
+                    <div class="action-title">Scan</div>
+                    <small class="text-muted">Barcodes</small>
                 </a>
             </div>
             <div class="col-md-3 col-sm-6 mb-3">
@@ -172,25 +185,25 @@
                     <div class="action-icon text-info">
                         <i class="bi bi-list-ul"></i>
                     </div>
-                    <div class="action-title">Voir Produits</div>
-                    <small class="text-muted">Liste complète</small>
+                    <div class="action-title">View Products</div>
+                    <small class="text-muted">Full list</small>
                 </a>
             </div>
         </div>
 
-        <!-- Liste des produits récents -->
+        <!-- Recent products list -->
         {% if produits %}
         <div class="table-card">
-            <h5 class="mb-3 fw-bold">Produits Récents</h5>
+            <h5 class="mb-3 fw-bold">Recent Products</h5>
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>Produit</th>
-                            <th>Code-barres</th>
-                            <th>Prix</th>
+                            <th>Product</th>
+                            <th>Barcode</th>
+                            <th>Price</th>
                             <th>Stock</th>
-                            <th>Catégorie</th>
+                            <th>Category</th>
                             <th class="text-end">Actions</th>
                         </tr>
                     </thead>
@@ -199,7 +212,7 @@
                         <tr>
                             <td class="fw-semibold">{{ produit.nom }}</td>
                             <td><code>{{ produit.code_barres }}</code></td>
-                            <td><strong>{{ "%.2f"|format(produit.prix) }}€</strong></td>
+                            <td><strong>${{ "%.2f"|format(produit.prix) }}</strong></td>
                             <td>
                                 <span class="badge badge-stock 
                                     {% if produit.stock == 0 %}bg-danger
@@ -210,11 +223,12 @@
                             </td>
                             <td><small class="text-muted">{{ produit.categorie }}</small></td>
                             <td class="text-end">
-                                <a href="/code-barres/{{ produit.id }}" class="btn btn-sm btn-outline-secondary me-1" target="_blank" title="Code-barres">
+                                <a href="/code-barres/{{ produit.id }}" class="btn btn-sm btn-outline-secondary me-1"
+                                    target="_blank" title="Barcode">
                                     <i class="bi bi-upc-scan"></i>
                                 </a>
                                 <a href="/modifier/{{ produit.id }}" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-pencil"></i> Modifier
+                                    <i class="bi bi-pencil"></i> Edit
                                 </a>
                             </td>
                         </tr>
@@ -224,26 +238,27 @@
             </div>
             <div class="text-center mt-3">
                 <a href="/produits" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-right-circle me-1"></i>Voir tous les produits
+                    <i class="bi bi-arrow-right-circle me-1"></i>View all products
                 </a>
             </div>
         </div>
         {% else %}
         <div class="alert alert-info">
             <i class="bi bi-info-circle me-2"></i>
-            <strong>Aucun produit</strong> - Commencez par ajouter votre premier produit !
+            <strong>No products yet</strong> - Start by adding your first product!
         </div>
         {% endif %}
 
-        <!-- Alerte ruptures -->
+        <!-- Out of stock alert -->
         {% if ruptures and ruptures > 0 %}
         <div class="alert alert-danger mt-3">
             <i class="bi bi-exclamation-triangle me-2"></i>
-            <strong>{{ ruptures }} produit(s) en rupture de stock</strong>
+            <strong>{{ ruptures }} product(s) out of stock</strong>
         </div>
         {% endif %}
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
