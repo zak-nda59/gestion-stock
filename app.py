@@ -63,7 +63,7 @@ def init_database():
             CREATE TABLE IF NOT EXISTS categories (
                 id SERIAL PRIMARY KEY,
                 nom TEXT NOT NULL UNIQUE,
-                emoji TEXT DEFAULT '📦',
+                emoji TEXT DEFAULT '\ud83d\udce6',
                 description TEXT,
                 date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -76,7 +76,7 @@ def init_database():
                 code_barres TEXT UNIQUE NOT NULL,
                 prix REAL NOT NULL,
                 stock INTEGER NOT NULL DEFAULT 0,
-                categorie TEXT DEFAULT 'Autre',
+                categorie TEXT DEFAULT 'Other',
                 date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
@@ -89,7 +89,7 @@ def init_database():
             CREATE TABLE IF NOT EXISTS categories (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nom TEXT NOT NULL UNIQUE,
-                emoji TEXT DEFAULT '📦',
+                emoji TEXT DEFAULT '\ud83d\udce6',
                 description TEXT,
                 date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -102,7 +102,7 @@ def init_database():
                 code_barres TEXT UNIQUE NOT NULL,
                 prix REAL NOT NULL,
                 stock INTEGER NOT NULL DEFAULT 0,
-                categorie TEXT DEFAULT 'Autre',
+                categorie TEXT DEFAULT 'Other',
                 date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
@@ -110,44 +110,44 @@ def init_database():
         placeholder = '?'
         insert_ignore = 'INSERT OR IGNORE INTO categories (emoji, nom, description) VALUES (?, ?, ?)'
     
-    # Catégories par défaut (UNIQUEMENT si aucune catégorie n'existe)
+    # Default categories (ONLY if no category exists)
     cursor.execute('SELECT COUNT(*) FROM categories')
     result = cursor.fetchone()
     count_categories = result[0]
     
     if count_categories == 0:
-        categories_defaut = [
-            ('📱', 'Écran', 'Écrans et dalles tactiles'),
-            ('🔋', 'Batterie', 'Batteries et accumulateurs'),
-            ('🛡️', 'Coque', 'Coques et étuis de protection'),
-            ('🔍', 'Accessoire', 'Accessoires divers'),
-            ('🔌', 'Câble', 'Câbles et chargeurs'),
-            ('🔧', 'Outil', 'Outils de réparation'),
-            ('💾', 'Composant', 'Composants électroniques'),
-            ('🎧', 'Audio', 'Écouteurs et haut-parleurs'),
-            ('📦', 'Autre', 'Autres produits')
+        default_categories = [
+            ('\ud83d\udcf1', 'Screen', 'Screens and touch panels'),
+            ('\ud83d\udd0b', 'Battery', 'Batteries and accumulators'),
+            ('\ud83d\udee1\ufe0f', 'Case', 'Protective cases and covers'),
+            ('\ud83d\udd0d', 'Accessory', 'Various accessories'),
+            ('\ud83d\udd0c', 'Cable', 'Cables and chargers'),
+            ('\ud83d\udd27', 'Tool', 'Repair tools'),
+            ('\ud83d\udcbe', 'Component', 'Electronic components'),
+            ('\ud83c\udfa7', 'Audio', 'Earphones and speakers'),
+            ('\ud83d\udce6', 'Other', 'Other products')
         ]
         
-        for emoji, nom, desc in categories_defaut:
+        for emoji, name, desc in default_categories:
             try:
-                cursor.execute(insert_ignore, (emoji, nom, desc))
+                cursor.execute(insert_ignore, (emoji, name, desc))
             except:
                 pass
     
-    # Produits d'exemple (seulement si aucun produit existe)
+    # Example products (only if no product exists)
     cursor.execute('SELECT COUNT(*) FROM produits')
     result = cursor.fetchone()
     count_produits = result[0]
     
     if count_produits == 0:
         produits_exemple = [
-            ('Écran iPhone 12', '1234567890123', 45.99, 15, 'Écran'),
-            ('Batterie Samsung S21', '2345678901234', 29.99, 8, 'Batterie'),
-            ('Coque iPhone 13 Pro', '3456789012345', 12.99, 25, 'Coque'),
-            ('Câble USB-C 2m', '4567890123456', 8.99, 30, 'Câble'),
-            ('Écouteurs Bluetooth', '5678901234567', 19.99, 12, 'Audio'),
-            ('Tournevis Kit', '6789012345678', 15.99, 5, 'Outil'),
-            ('Chargeur Rapide', '7890123456789', 24.99, 18, 'Câble')
+            ('iPhone 12 Screen', '1234567890123', 45.99, 15, 'Screen'),
+            ('Samsung S21 Battery', '2345678901234', 29.99, 8, 'Battery'),
+            ('iPhone 13 Pro Case', '3456789012345', 12.99, 25, 'Case'),
+            ('USB-C Cable 2m', '4567890123456', 8.99, 30, 'Cable'),
+            ('Bluetooth Earphones', '5678901234567', 19.99, 12, 'Audio'),
+            ('Screwdriver Kit', '6789012345678', 15.99, 5, 'Tool'),
+            ('Fast Charger', '7890123456789', 24.99, 18, 'Cable')
         ]
         
         insert_produit = f'INSERT INTO produits (nom, code_barres, prix, stock, categorie) VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})'
@@ -373,13 +373,13 @@ def ajouter_produit():
             nom = request.form.get('nom', '').strip()
             prix = float(request.form.get('prix', 0))
             stock = int(request.form.get('stock', 0))
-            categorie = request.form.get('categorie', 'Autre').strip()
+            categorie = request.form.get('categorie', 'Other').strip()
             code_barres = request.form.get('code_barres', '').strip()
             
             if not nom:
                 return render_template('ajouter.html', 
                                      categories=get_categories(),
-                                     error="Le nom du produit est obligatoire")
+                                     error="Product name is required")
             
             # GÃ©nÃ©ration automatique du code-barres si vide
             if not code_barres:
@@ -397,7 +397,7 @@ def ajouter_produit():
         except Exception as e:
             return render_template('ajouter.html', 
                                  categories=get_categories(),
-                                 error=f"Erreur: {str(e)}")
+                                 error=f"Error: {str(e)}")
     
     return render_template('ajouter.html', categories=get_categories())
 
@@ -409,10 +409,10 @@ def modifier_produit(id):
             nom = request.form.get('nom', '').strip()
             prix = float(request.form.get('prix', 0))
             stock = int(request.form.get('stock', 0))
-            categorie = request.form.get('categorie', 'Autre').strip()
+            categorie = request.form.get('categorie', 'Other').strip()
             
             if not nom:
-                # RÃ©cupÃ©rer le produit pour rÃ©afficher le formulaire
+                # Récupérer le produit pour réafficher le formulaire
                 conn = get_db_connection()
                 cursor = get_cursor(conn)
                 query = adapt_query('SELECT * FROM produits WHERE id = ?')
@@ -423,7 +423,7 @@ def modifier_produit(id):
                 return render_template('modifier.html', 
                                      produit=row_to_dict(produit),
                                      categories=get_categories(),
-                                     error="Le nom du produit est obligatoire")
+                                     error="Product name is required")
             
             conn = get_db_connection()
             cursor = get_cursor(conn)
@@ -435,7 +435,7 @@ def modifier_produit(id):
             return redirect(url_for('voir_produits'))
             
         except Exception as e:
-            # RÃ©cupÃ©rer le produit pour rÃ©afficher le formulaire avec l'erreur
+            # Récupérer le produit pour réafficher le formulaire avec l'erreur
             conn = get_db_connection()
             cursor = get_cursor(conn)
             query = adapt_query('SELECT * FROM produits WHERE id = ?')
@@ -446,7 +446,7 @@ def modifier_produit(id):
             return render_template('modifier.html', 
                                  produit=row_to_dict(produit),
                                  categories=get_categories(),
-                                 error=f"Erreur: {str(e)}")
+                                 error=f"Error: {str(e)}")
     
     # GET - Afficher le formulaire
     try:
@@ -458,7 +458,7 @@ def modifier_produit(id):
         conn.close()
         
         if not produit:
-            return render_template('error.html', error="Produit non trouvÃ©")
+            return render_template('error.html', error="Product not found")
         
         return render_template('modifier.html', 
                              produit=row_to_dict(produit),
@@ -509,7 +509,7 @@ def afficher_code_barres(id):
         conn.close()
         
         if not produit:
-            return render_template('error.html', error="Produit non trouvé")
+            return render_template('error.html', error="Product not found")
         
         return render_template('code_barres_produit.html', produit=row_to_dict(produit))
     except Exception as e:
@@ -565,42 +565,45 @@ def ajuster_stock():
         
         if not produit:
             conn.close()
-            return jsonify({'success': False, 'message': 'Produit non trouvÃ©'})
+            return jsonify({'success': False, 'message': 'Product not found'})
         
         produit_dict = row_to_dict(produit)
         stock_actuel = produit_dict['stock']
         
         if action == 'ajouter':
             nouveau_stock = stock_actuel + quantite
+            action_text = f'added {quantite}'
         elif action == 'retirer':
             if stock_actuel < quantite:
                 conn.close()
                 return jsonify({
                     'success': False, 
-                    'message': f'Stock insuffisant ! Stock actuel: {stock_actuel}, demandÃ©: {quantite}'
+                    'message': f'Not enough stock! Current stock: {stock_actuel}, requested: {quantite}'
                 })
             nouveau_stock = stock_actuel - quantite
+            action_text = f'removed {quantite}'
         elif action == 'definir':
             nouveau_stock = quantite
+            action_text = f'set to {quantite}'
         else:
             conn.close()
-            return jsonify({'success': False, 'message': 'Action non valide'})
+            return jsonify({'success': False, 'message': 'Invalid action'})
         
-        # Mise Ã  jour du stock
+        # Mise à jour du stock
         query = adapt_query('UPDATE produits SET stock = ? WHERE id = ?')
         cursor.execute(query, (nouveau_stock, produit_id))
         conn.commit()
         conn.close()
         
         action_text = {
-            'ajouter': f'ajouté {quantite}',
-            'retirer': f'retiré {quantite}',
-            'definir': f'défini à {quantite}'
+            'ajouter': f'added {quantite}',
+            'retirer': f'removed {quantite}',
+            'definir': f'set to {quantite}'
         }[action]
         
         return jsonify({
             'success': True,
-            'message': f'âœ… {produit_dict["nom"]}: {action_text} unitÃ©(s)',
+            'message': f'✅ {produit_dict["nom"]}: {action_text} unit(s)',
             'produit': produit_dict['nom'],
             'action': action,
             'quantite': quantite,
@@ -609,7 +612,7 @@ def ajuster_stock():
         })
         
     except Exception as e:
-        return jsonify({'success': False, 'message': f'Erreur: {str(e)}'})
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'})
 
 @app.route('/scan', methods=['POST'])
 def scan():
@@ -621,7 +624,7 @@ def scan():
         quantite = data.get('quantite', 1)
         
         if not code:
-            return jsonify({'success': False, 'message': 'Code vide'})
+            return jsonify({'success': False, 'message': 'Empty code'})
         
         conn = get_db_connection()
         cursor = get_cursor(conn)
@@ -631,11 +634,11 @@ def scan():
         
         if not produit:
             conn.close()
-            return jsonify({'success': False, 'message': f'Produit non trouvÃ©: {code}'})
+            return jsonify({'success': False, 'message': f'Product not found: {code}'})
         
         produit_dict = row_to_dict(produit)
         
-        # Si aucune action spÃ©cifiÃ©e, retourner les infos du produit pour demander l'action
+        # Si aucune action spécifiée, retourner les infos du produit pour demander l'action
         if not action:
             conn.close()
             return jsonify({
@@ -649,7 +652,7 @@ def scan():
                     'stock': produit_dict['stock'],
                     'categorie': produit_dict['categorie']
                 },
-                'message': f'Produit trouvÃ©: {produit_dict["nom"]}'
+                'message': f'Product found: {produit_dict["nom"]}'
             })
         
         # Traitement de l'action
@@ -660,14 +663,14 @@ def scan():
                 conn.close()
                 return jsonify({
                     'success': False, 
-                    'message': f'âŒ Stock insuffisant ! Stock actuel: {stock_actuel}, demandÃ©: {quantite}'
+                    'message': f'❌ Not enough stock! Current stock: {stock_actuel}, requested: {quantite}'
                 })
             nouveau_stock = stock_actuel - quantite
-            action_text = f'retirÃ© {quantite}'
+            action_text = f'removed {quantite}'
         
         elif action == 'ajouter':
             nouveau_stock = stock_actuel + quantite
-            action_text = f'ajoutÃ© {quantite}'
+            action_text = f'added {quantite}'
         
         else:
             conn.close()
@@ -804,7 +807,7 @@ def generer_code_barres(produit_id):
         conn.close()
         
         if not produit:
-            return "Produit non trouvÃ©", 404
+            return "Product not found", 404
         
         produit_dict = row_to_dict(produit)
         
@@ -886,7 +889,7 @@ def generer_code_barres(produit_id):
         return response
         
     except Exception as e:
-        return f"Erreur: {str(e)}", 500
+        return f"Error: {str(e)}", 500
 
 @app.route('/export')
 def export_csv():
@@ -970,7 +973,7 @@ def api_produit_by_barcode(code_barres):
         else:
             return jsonify({
                 'success': False,
-                'message': 'Produit non trouvé'
+                'message': 'Product not found'
             })
         
     except Exception as e:
@@ -1057,7 +1060,7 @@ def gerer_categories():
         except Exception as e:
             return render_template('categories.html', 
                                  categories=get_categories(),
-                                 error=f"Erreur: {str(e)}")
+                                 error=f"Error: {str(e)}")
     
     return render_template('categories.html', categories=get_categories())
 
