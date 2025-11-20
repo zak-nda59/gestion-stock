@@ -377,7 +377,7 @@ def ajouter_produit():
             code_barres = request.form.get('code_barres', '').strip()
             
             if not nom:
-                return render_template('ajouter.html', 
+                return render_template('add_product.html', 
                                      categories=get_categories(),
                                      error="Product name is required")
             
@@ -395,11 +395,11 @@ def ajouter_produit():
             return redirect(url_for('index'))
             
         except Exception as e:
-            return render_template('ajouter.html', 
+            return render_template('add_product.html', 
                                  categories=get_categories(),
                                  error=f"Error: {str(e)}")
     
-    return render_template('ajouter.html', categories=get_categories())
+    return render_template('add_product.html', categories=get_categories())
 
 @app.route('/modifier/<int:id>', methods=['GET', 'POST'])
 def modifier_produit(id):
@@ -420,7 +420,7 @@ def modifier_produit(id):
                 produit = cursor.fetchone()
                 conn.close()
                 
-                return render_template('modifier.html', 
+                return render_template('edit_product.html', 
                                      produit=row_to_dict(produit),
                                      categories=get_categories(),
                                      error="Product name is required")
@@ -443,7 +443,7 @@ def modifier_produit(id):
             produit = cursor.fetchone()
             conn.close()
             
-            return render_template('modifier.html', 
+            return render_template('edit_product.html', 
                                  produit=row_to_dict(produit),
                                  categories=get_categories(),
                                  error=f"Error: {str(e)}")
@@ -460,7 +460,7 @@ def modifier_produit(id):
         if not produit:
             return render_template('error.html', error="Product not found")
         
-        return render_template('modifier.html', 
+        return render_template('edit_product.html', 
                              produit=row_to_dict(produit),
                              categories=get_categories())
         
@@ -490,12 +490,12 @@ def scanner():
 @app.route('/test-scanner')
 def test_scanner():
     """Page de test pour le scanner"""
-    return render_template('test_scanner.html')
+    return render_template('scanner_test.html')
 
 @app.route('/scanner-simple')
 def scanner_simple():
     """Scanner simplifié avec diagnostic"""
-    return render_template('scanner_simple.html')
+    return render_template('simple_scanner.html')
 
 @app.route('/code-barres/<int:id>')
 def afficher_code_barres(id):
@@ -511,7 +511,7 @@ def afficher_code_barres(id):
         if not produit:
             return render_template('error.html', error="Product not found")
         
-        return render_template('code_barres_produit.html', produit=row_to_dict(produit))
+        return render_template('product_barcode.html', produit=row_to_dict(produit))
     except Exception as e:
         return render_template('error.html', error=str(e))
 
@@ -536,7 +536,7 @@ def imprimer_codes_barres():
         from datetime import datetime
         date_aujourd_hui = datetime.now().strftime('%d/%m/%Y %H:%M')
         
-        return render_template('imprimer_codes_barres.html', 
+        return render_template('print_barcodes.html', 
                              produits=rows_to_list(produits),
                              categories=get_categories(),
                              date=date_aujourd_hui)
@@ -739,7 +739,7 @@ def statistiques():
             'top_categories': rows_to_list(top_categories)
         }
         
-        return render_template('statistiques.html', stats=stats, categories=get_categories())
+        return render_template('statistics.html', stats=stats, categories=get_categories())
         
     except Exception as e:
         return render_template('error.html', error=str(e))
@@ -788,7 +788,7 @@ def codes_barres():
         produits = cursor.fetchall()
         conn.close()
         
-        return render_template('codes_barres.html', 
+        return render_template('barcodes.html', 
                              produits=rows_to_list(produits),
                              categories=get_categories())
         
@@ -902,14 +902,14 @@ def export_csv():
         conn.close()
         
         if not produits:
-            return render_template('error.html', error="Aucun produit Ã  exporter")
+            return render_template('error.html', error="No product to export")
         
         # CrÃ©er le CSV en mÃ©moire
         output = io.StringIO()
         writer = csv.writer(output)
         
-        # En-tÃªtes
-        writer.writerow(['ID', 'Nom', 'Code-barres', 'Prix (â‚¬)', 'Stock', 'CatÃ©gorie', 'Date crÃ©ation'])
+        # Headers
+        writer.writerow(['ID', 'Name', 'Barcode', 'Price ($)', 'Stock', 'Category', 'Created at'])
         
         # DonnÃ©es
         for produit in produits:
@@ -1046,7 +1046,7 @@ def gerer_categories():
             if not nom:
                 return render_template('categories.html', 
                                      categories=get_categories(),
-                                     error="Le nom de la catÃ©gorie est obligatoire")
+                                     error="Category name is required")
             
             conn = get_db_connection()
             cursor = get_cursor(conn)
@@ -1081,8 +1081,8 @@ def supprimer_categorie(id):
 
 @app.route('/aide')
 def aide():
-    """Page d'aide"""
-    return render_template('aide.html', categories=get_categories())
+    """Help page"""
+    return render_template('help.html', categories=get_categories())
 
 @app.route('/favicon.ico')
 def favicon():
@@ -1093,7 +1093,7 @@ def favicon():
 try:
     init_database()
     db_type = "PostgreSQL" if USE_POSTGRES else "SQLite"
-    print(f"✅ Base de données {db_type} initialisée")
+    print(f"✅ Database {db_type} initialized")
     
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -1101,42 +1101,42 @@ try:
     count = cursor.fetchone()[0]
     conn.close()
     
-    print(f"📦 {count} produits en base")
-    print(f"🗄️ Type de base: {db_type}")
+    print(f"📦 {count} products in database")
+    print(f"🗄️ Database type: {db_type}")
     if USE_POSTGRES:
-        print(f"🔗 Connexion PostgreSQL active")
+        print(f"🔗 PostgreSQL connection active")
     
 except Exception as e:
-    print(f"⚠️ Initialisation base de données: {e}")
-    print(f"⚠️ Type erreur: {type(e).__name__}")
+    print(f"⚠️ Database initialization error: {e}")
+    print(f"⚠️ Error type: {type(e).__name__}")
     import traceback
     traceback.print_exc()
-    print("La base sera créée à la première requête")
+    print("Database will be created on first request")
 
 if __name__ == '__main__':
-    print("🚀 BOUTIQUE MOBILE - VERSION MINIMALE")
+    print("🚀 SMART INVENTORY & BARCODE SCANNER - MINIMAL VERSION")
     print("=" * 50)
     
-    print("🌐 Application locale prête")
-    print("📱 Accès: http://localhost:5000")
-    print("🔧 Fonctionnalités disponibles:")
-    print("   ✅ Gestion des produits (CRUD)")
-    print("   ✅ Scanner codes-barres (caméra + douchette)")
-    print("   ✅ Filtres et tris avancés")
-    print("   ✅ Statistiques avec graphiques")
-    print("   ✅ Alertes ruptures/stock faible")
-    print("   ✅ Génération de codes-barres (SVG)")
-    print("   ✅ Export CSV/Excel")
-    print("   ✅ API JSON (produits + stats)")
-    print("   ✅ Interface responsive")
-    print("   ✅ Base de données persistante")
+    print("🌐 Local application ready")
+    print("📱 Access: http://localhost:5000")
+    print("🔧 Available features:")
+    print("   ✅ Product management (CRUD)")
+    print("   ✅ Barcode scanning (camera + handheld scanner)")
+    print("   ✅ Advanced filters and sorting")
+    print("   ✅ Statistics with charts")
+    print("   ✅ Out-of-stock / low stock alerts")
+    print("   ✅ Barcode generation (SVG)")
+    print("   ✅ CSV/Excel export")
+    print("   ✅ JSON API (products + stats)")
+    print("   ✅ Responsive interface")
+    print("   ✅ Persistent database")
     
-    # Lancement accessible depuis le réseau
-    print("📱 Pour accéder depuis votre téléphone:")
-    print("   1. Connectez votre téléphone au même WiFi")
-    print("   2. Ouvrez votre navigateur mobile")
-    print("   3. Allez sur: http://192.168.0.154:5000")
-    print("   (Remplacez l'IP par celle affichée ci-dessus)")
+    # Launch accessible from the network
+    print("📱 To access from your phone:")
+    print("   1. Connect your phone to the same WiFi network")
+    print("   2. Open your mobile browser")
+    print("   3. Go to: http://192.168.0.154:5000")
+    print("   (Replace the IP with the one shown above)")
     print()
     
     app.run(host='0.0.0.0', port=5000, debug=True)

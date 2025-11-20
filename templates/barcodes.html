@@ -1,21 +1,24 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏷️ Codes-barres</title>
+    <title>🏷️ Barcodes</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        * { font-family: 'Poppins', sans-serif; }
-        
-        body { 
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
             background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
             min-height: 100vh;
             padding: 20px 0;
         }
-        
+
         .barcode-card {
             background: white;
             border-radius: 20px;
@@ -24,12 +27,12 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
         }
-        
+
         .barcode-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
         }
-        
+
         .barcode-container {
             text-align: center;
             padding: 20px;
@@ -37,25 +40,25 @@
             border-radius: 15px;
             margin: 15px 0;
         }
-        
+
         .product-info {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
         }
-        
+
         .product-name {
             font-size: 1.2rem;
             font-weight: 600;
             color: #333;
         }
-        
+
         .product-details {
             color: #666;
             font-size: 0.9rem;
         }
-        
+
         .btn-print {
             background: linear-gradient(45deg, #6f42c1, #e83e8c);
             color: white;
@@ -65,12 +68,12 @@
             font-weight: 600;
             transition: all 0.3s ease;
         }
-        
+
         .btn-print:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(111, 66, 193, 0.4);
         }
-        
+
         .empty-state {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
@@ -80,12 +83,13 @@
         }
     </style>
 </head>
+
 <body>
     <nav class="navbar navbar-expand-lg" style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);">
         <div class="container">
-            <span class="navbar-brand text-white fw-bold">🏷️ Générateur de Codes-barres</span>
+            <span class="navbar-brand text-white fw-bold">🏷️ Barcode Generator</span>
             <a href="/" class="btn btn-light btn-sm">
-                <i class="bi bi-arrow-left me-1"></i>Retour
+                <i class="bi bi-arrow-left me-1"></i>Back
             </a>
         </div>
     </nav>
@@ -100,27 +104,27 @@
                         <div>
                             <div class="product-name">{{ produit.nom }}</div>
                             <div class="product-details">
-                                {{ produit.categorie }} • {{ "%.2f"|format(produit.prix) }}€
+                                {{ produit.categorie }} • ${{ "%.2f"|format(produit.prix) }}
                             </div>
                         </div>
                         <span class="badge bg-primary">Stock: {{ produit.stock }}</span>
                     </div>
-                    
+
                     <div class="barcode-container">
-                        <img src="/generer-code/{{ produit.id }}" 
-                             alt="Code-barres {{ produit.code_barres }}"
-                             style="max-width: 100%; height: auto;">
+                        <img src="/generer-code/{{ produit.id }}" alt="Barcode {{ produit.code_barres }}"
+                            style="max-width: 100%; height: auto;">
                         <div class="mt-2">
                             <code>{{ produit.code_barres }}</code>
                         </div>
                     </div>
-                    
+
                     <div class="text-center">
                         <button class="btn btn-print" onclick="imprimerCodeBarres({{ produit.id }})">
-                            <i class="bi bi-printer me-1"></i>Imprimer
+                            <i class="bi bi-printer me-1"></i>Print
                         </button>
-                        <button class="btn btn-outline-secondary btn-sm ms-2" onclick="telechargerCodeBarres({{ produit.id }}, '{{ produit.nom }}')">
-                            <i class="bi bi-download me-1"></i>Télécharger
+                        <button class="btn btn-outline-secondary btn-sm ms-2"
+                            onclick="telechargerCodeBarres({{ produit.id }}, '{{ produit.nom }}')">
+                            <i class="bi bi-download me-1"></i>Download
                         </button>
                     </div>
                 </div>
@@ -130,10 +134,10 @@
         {% else %}
         <div class="empty-state">
             <i class="bi bi-upc-scan" style="font-size: 4rem; color: #ccc; margin-bottom: 20px;"></i>
-            <h4>Aucun produit disponible</h4>
-            <p class="text-muted">Ajoutez des produits pour générer leurs codes-barres</p>
+            <h4>No product available</h4>
+            <p class="text-muted">Add products to generate their barcodes</p>
             <a href="/ajouter" class="btn btn-primary btn-lg">
-                <i class="bi bi-plus-circle me-2"></i>Ajouter un produit
+                <i class="bi bi-plus-circle me-2"></i>Add a product
             </a>
         </div>
         {% endif %}
@@ -143,11 +147,11 @@
         function imprimerCodeBarres(produitId) {
             const url = `/generer-code/${produitId}`;
             const printWindow = window.open(url, '_blank');
-            printWindow.onload = function() {
+            printWindow.onload = function () {
                 printWindow.print();
             };
         }
-        
+
         function telechargerCodeBarres(produitId, nomProduit) {
             const url = `/generer-code/${produitId}`;
             const link = document.createElement('a');
@@ -159,12 +163,12 @@
         }
 
         // Animation d'entrée
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const cards = document.querySelectorAll('.barcode-card');
             cards.forEach((card, index) => {
                 card.style.opacity = '0';
                 card.style.transform = 'translateY(30px)';
-                
+
                 setTimeout(() => {
                     card.style.transition = 'all 0.6s ease';
                     card.style.opacity = '1';
@@ -174,4 +178,5 @@
         });
     </script>
 </body>
+
 </html>
